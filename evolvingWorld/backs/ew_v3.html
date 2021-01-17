@@ -12,10 +12,7 @@
 // Classes:
 //	- CanvasStage Class - Main Stage Class, Starting point
 //  - Kids Class 		- Kids object...
-//	- KidsBuilder Class - Builder class for Kids Object
-//	- Builder Class 	- Util For Attribtue & Location generator class
-//	- PhysicsHandler	- Class to manage physical related decision/detection --> collision with something..  detect bounds..
-//						- Based on each object location..
+//	- KidsAttribute Class - 
 
 // --------------------------------------
 // -- CanvasStage Class
@@ -29,7 +26,6 @@ function CanvasStage()
 	me._bStop = false;
 	me._initialKidsNum = 5;
 	me.kidsBuilder;
-	me.physicsHandler;
 	// -------------------
 
 	me.startUp = function()
@@ -47,8 +43,6 @@ function CanvasStage()
 		// --- Initial Kids Build using 'KidsBuilder' class.
 		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
 		me.kidsBuilder.createKids( me._initialKidsNum );
-
-		me.physicsHandler = new PhysicsHandler();
 	};
 
 
@@ -84,13 +78,14 @@ function CanvasStage()
 	{
 		if ( !me._bStop )
 		{
-			// NOTE: Put this in 'PhysicsHandler'?
+			//createjs.Ticker.setPause( false );
+			//createjs.Ticker.setPaused( true );
+
 			for ( i = 0; i < stageObj.numChildren; i++ )
 			{
-				stageObj.getChildAt( i ).performNext(); // performAction?
+				stageObj.getChildAt( i ).performNext();
+				//stage.getChildAt( i ).x += 3;
 			}
-
-			me.physicsHandler.performPhysics( stageObj );
 
 			stageObj.update();
 		}
@@ -131,6 +126,7 @@ function CanvasStage()
 
 // --------------------------------------
 
+
 function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 {
 	var me = this;
@@ -167,55 +163,6 @@ function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 		return new childClass( me.stageObj, name, attribute, locationXY.locX, locationXY.locY );
 	};
 }
-
-
-// ---------------
-
-function PhysicsHandler() //, canvasWidth, canvasHeight )
-{
-	var me = this;
-	
-	//me.stageObj = stageObj;
-
-	me.performPhysics = function( stageObj )
-	{
-		// NOTE: Put this in 'PhysicsHandler'?
-		//for ( i = 0; i < stageObj.numChildren; i++ )
-		//{
-		//	stageObj.getChildAt( i ).performNext(); // performAction?
-		//}
-
-
-		// 1. notify the wall(bound) reach detection
-
-		// 2. notify the object collision detection
-
-		// 3. notify the other objects in proximity detection
-
-	};
-
-	/*
-			// TODO: THIS WALL BOUNCE DETECTION SHOULD BE PLACED IN PHYSICS...
-			if ( ( me.x - me.size ) <= 0 
-				|| ( me.x + me.size ) >= me.canvasBoundsX )
-			{
-				me.setDirection_Bounce( "x" );
-			}
-		}
-
-		if ( locY !== undefined )
-		{
-			me.y = locY;
-
-			if ( ( me.y - me.size ) <= 0 
-				|| ( me.y + me.size ) >= me.canvasBoundsY )
-			{
-				me.setDirection_Bounce( "y" );
-			}
-		}
-	*/
-}
-
 
 // ---------------
 
@@ -472,7 +419,6 @@ function Kid( stage, name, attribute, locationX, locationY )
 		me.movementY = Math.sin( angle ) * speed;
 	};
 
-	// Put this on Physics?  Or Physics just tells us that the bound has been reached?
 	me.setDirection_Bounce = function( bounceDirection )
 	{
 		if ( bounceDirection == "x" )
@@ -497,7 +443,6 @@ function Kid( stage, name, attribute, locationX, locationY )
 		{
 			me.x = locX;
 
-			// TODO: THIS WALL BOUNCE DETECTION SHOULD BE PLACED IN PHYSICS...
 			if ( ( me.x - me.size ) <= 0 
 				|| ( me.x + me.size ) >= me.canvasBoundsX )
 			{
