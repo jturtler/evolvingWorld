@@ -6,6 +6,7 @@
 
 <!-- script src="https://code.createjs.com/easeljs-0.8.1.min.js"></script -->
 <script src="https://code.createjs.com/1.0.0/easeljs.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script>
 // CreateJS / easelJS Referenece Doc: http://www.createjs.com/getting-started
@@ -16,6 +17,13 @@
 //	- Builder Class 	- Util For Attribtue & Location generator class
 //	- PhysicsHandler	- Class to manage physical related decision/detection --> collision with something..  detect bounds..
 //						- Based on each object location..
+
+// --------------------------------------
+// -- Some data Class
+function INFO() {};
+INFO.AGING_COLOR = "silver";
+INFO.WALL_CONTACT_COLOR = "red";
+
 
 // --------------------------------------
 // -- CanvasStage Class
@@ -48,7 +56,7 @@ function CanvasStage()
 		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
 		me.kidsBuilder.createKids( me._initialKidsNum );
 
-		me.physicsHandler = new PhysicsHandler();
+		me.physicsHandler = new PhysicsHandler( me.canvas_width, me.canvas_height );
 	};
 
 
@@ -75,7 +83,7 @@ function CanvasStage()
 			me.handleKeyDown( event, stageObj );	
 		};
 
-		me.outputMsgAdd( "Key: 's' to stop/start, 'a' to add new kid" );
+		Util.outputMsgAdd( "Key: 's' to stop/start, 'a' to add new kid" );
 	};
 
 	// -------------------------------------------------------
@@ -108,24 +116,16 @@ function CanvasStage()
 
 				var msg = ( me._bStop ) ? "Stopped" : "Started";
 				//createjs.Ticker.setPaused( me._bStop );
-				me.outputMsgAdd( msg );
+				Util.outputMsgAdd( msg, 4 );
 
 				return false;
 			case 65: //_keycode_a:
 				
 				//me.addKid( stageObj );
 				var kidObj = me.kidsBuilder.createKid();				
-				me.outputMsgAdd( "Added a kid: " + kidObj.name );
 
 				return false;
 		}
-	};
-
-	me.outputMsgAdd = function( msg )
-	{
-		var outputDiv = document.getElementById( "divMsg" );
-		
-		outputDiv.innerHTML = msg + "<br>" + outputDiv.innerHTML;
 	};
 }
 
@@ -171,49 +171,46 @@ function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 
 // ---------------
 
-function PhysicsHandler() //, canvasWidth, canvasHeight )
+function PhysicsHandler( canvas_width, canvas_height )
 {
 	var me = this;
 	
+	me.canvas_width = canvas_width;
+	me.canvas_height = canvas_height;
+
 	//me.stageObj = stageObj;
 
 	me.performPhysics = function( stageObj )
 	{
-		// NOTE: Put this in 'PhysicsHandler'?
-		//for ( i = 0; i < stageObj.numChildren; i++ )
-		//{
-		//	stageObj.getChildAt( i ).performNext(); // performAction?
-		//}
+		for ( i = 0; i < stageObj.numChildren; i++ )
+		{
+			var childObj = stageObj.getChildAt( i );
 
+			me.wallReachedNotice( childObj, me.canvas_width, me.canvas_height );
 
-		// 1. notify the wall(bound) reach detection
+			//me.objectProximityNotice( childObj, stageObj.children );
+		}
 
 		// 2. notify the object collision detection
-
 		// 3. notify the other objects in proximity detection
-
 	};
 
-	/*
-			// TODO: THIS WALL BOUNCE DETECTION SHOULD BE PLACED IN PHYSICS...
-			if ( ( me.x - me.size ) <= 0 
-				|| ( me.x + me.size ) >= me.canvasBoundsX )
-			{
-				me.setDirection_Bounce( "x" );
-			}
-		}
 
-		if ( locY !== undefined )
-		{
-			me.y = locY;
+	me.wallReachedNotice = function( childObj, canvas_width, canvas_height )
+	{
+		var ObjectLoc_Left = childObj.x - childObj.size;
+		var ObjectLoc_Right = childObj.x + childObj.size;
+		var ObjectLoc_Top = childObj.y - childObj.size;
+		var ObjectLoc_Bottom = childObj.y + childObj.size;
 
-			if ( ( me.y - me.size ) <= 0 
-				|| ( me.y + me.size ) >= me.canvasBoundsY )
-			{
-				me.setDirection_Bounce( "y" );
-			}
-		}
-	*/
+		// When reaching left wall, we only notify it if it reach the position of 0 or less
+		//	And the direction was left (minus), not right or straight down.
+		if ( ObjectLoc_Left <= 0 && childObj.movementX < 0 ) childObj.addNotice( "reachedWall_Left" );
+		else if ( ObjectLoc_Right >= canvas_width && childObj.movementX > 0 ) childObj.addNotice( "reachedWall_Right" );
+		else if ( ObjectLoc_Top <= 0 && childObj.movementY < 0 ) childObj.addNotice( "reachedWall_Top" );
+		else if ( ObjectLoc_Bottom >= canvas_height && childObj.movementY > 0 ) childObj.addNotice( "reachedWall_Bottom" );		
+	};
+
 }
 
 
@@ -221,15 +218,15 @@ function PhysicsHandler() //, canvasWidth, canvasHeight )
 
 function Builder() {};
 
-Builder.COLOR_LIST = [ "Blue", "Green", "Yellow", "Red" ];
+Builder.OBJ_COLOR_LIST = [ "#7C9AFC", "#A0DE8F", "#F0F58C", "Orange" ];
 
 Builder.newAttribute = function() 
 {
 	var attrJson = {};
 
-	attrJson.speed = Util.getRandNumBtw( 1, 4 );
-	attrJson.size = Util.getRandNumBtw( 4, 20 );
-	attrJson.color = Util.getRandFromList( Builder.COLOR_LIST );
+	attrJson.speed = Util.getRandNumBtw( 1, 7 );
+	attrJson.size = Util.getRandNumBtw( 4, 20 );  // radius
+	attrJson.color = Util.getRandFromList( Builder.OBJ_COLOR_LIST );
 
 	return attrJson;
 };
@@ -264,6 +261,10 @@ function Kid( stage, name, attribute, locationX, locationY )
 
 	me.locationX = locationX;
 	me.locationY = locationY;
+
+	me.notices = [];
+	
+	// ----------------------------
 
 	me.movementX;
 	me.movementY;
@@ -323,17 +324,22 @@ function Kid( stage, name, attribute, locationX, locationY )
 	{
 		console.log( 'click test: ' + me.name );
 
-		me.addFlashAction( 10, "smallCircle", "Red", 50 );
+		Util.outputMsgAdd( JSON.stringify( me.getObjQuickInfo() ), 10 );
 
-		me.setDirection_Random( me.speed );
+		//me.addFlashAction( 10, "innerCircle", "#8A13AD", 50 );
+		//me.setDirection_Random( me.speed );
 	};
-
 
 	// -----------------------------------
 	// --- Actions
 
 	me.performNext = function()
 	{
+		// 1st, make the directional location one movement
+		me.moveNext( me.notices );
+
+		// --------------
+
 		me.tickCount++;
 		var newAge = Math.floor( me.tickCount / me.agingSpeed );
 		
@@ -350,9 +356,10 @@ function Kid( stage, name, attribute, locationX, locationY )
 			me.paintShape( me.color, me.size, me.shape.graphics );
 
 			me.displayFlash( me.flashAction );
-
-			me.moveNext();
 		}
+
+		// clear notices after each perform
+		me.notices = [];
 	};
 
 
@@ -383,10 +390,17 @@ function Kid( stage, name, attribute, locationX, locationY )
 				item_flash.count--;
 
 				// remove the 
-				if ( item_flash.action == "smallCircle" )
+				if ( item_flash.action == "innerCircle" )
 				{
 					var newSize = Math.floor( me.size / ( 100 / item_flash.sizePercentage ) );
 					me.paintShape( item_flash.color, newSize, me.shape.graphics );
+				}
+				else if ( item_flash.action == "outerCircle" )
+				{
+					// 'sizePercentage' should be changed to 'addedSize'
+					var newSize = me.size + item_flash.sizePercentage;
+					me.paintShape( item_flash.color, newSize, me.shape.graphics );
+					me.paintShape( me.color, me.size, me.shape.graphics );
 				}
 
 				if ( item_flash.count <= 0 )
@@ -410,7 +424,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 			me.age = newAge;
 
 			// Add short term flash when age is changed.
-			me.addFlashAction( 6, "smallCircle", "Gray", 80 );
+			me.addFlashAction( 2, "outerCircle", INFO.AGING_COLOR, 2 );
 
 			me.size = me.setSizeByAgeChange( me.size, ageDiff, newAge, me.middleAge );
 
@@ -472,51 +486,32 @@ function Kid( stage, name, attribute, locationX, locationY )
 		me.movementY = Math.sin( angle ) * speed;
 	};
 
-	// Put this on Physics?  Or Physics just tells us that the bound has been reached?
-	me.setDirection_Bounce = function( bounceDirection )
+
+	me.setDirection_Bounce = function( notices )
 	{
-		if ( bounceDirection == "x" )
-		{
-			me.movementX = -me.movementX;
-		}
-		else if ( bounceDirection == "y" )
-		{
-			me.movementY = -me.movementY;
-		}
+		var bBounce = false;
+
+		if ( notices.indexOf( "reachedWall_Left" ) >= 0 ) { me.movementX = -me.movementX; bBounce = true; }
+		else if ( notices.indexOf( "reachedWall_Right" ) >= 0 ) { me.movementX = -me.movementX; bBounce = true; }
+		else if ( notices.indexOf( "reachedWall_Top" ) >= 0 ) { me.movementY = -me.movementY; bBounce = true; }
+		else if ( notices.indexOf( "reachedWall_Bottom" ) >= 0 ) { me.movementY = -me.movementY; bBounce = true; }
+
+		if ( bBounce ) me.addFlashAction( 3, "innerCircle", INFO.WALL_CONTACT_COLOR, 70 );
 	};
 
-	me.moveNext = function()
+	me.moveNext = function( notices )
 	{
+		me.setDirection_Bounce( notices );
+
 		me.setLocation( me.x + me.movementX, me.y + me.movementY );
 	};
 
 
 	me.setLocation = function( locX, locY )
 	{
-		if ( locX !== undefined )
-		{
-			me.x = locX;
-
-			// TODO: THIS WALL BOUNCE DETECTION SHOULD BE PLACED IN PHYSICS...
-			if ( ( me.x - me.size ) <= 0 
-				|| ( me.x + me.size ) >= me.canvasBoundsX )
-			{
-				me.setDirection_Bounce( "x" );
-			}
-		}
-
-		if ( locY !== undefined )
-		{
-			me.y = locY;
-
-			if ( ( me.y - me.size ) <= 0 
-				|| ( me.y + me.size ) >= me.canvasBoundsY )
-			{
-				me.setDirection_Bounce( "y" );
-			}
-		}
+		if ( locX ) me.x = locX;
+		if ( locY ) me.y = locY;
 	};
-
 
 	// -----------------------------------------
 	// ---- Setup Methods -----
@@ -540,6 +535,23 @@ function Kid( stage, name, attribute, locationX, locationY )
 	me.deleteThisKid = function( stage )
 	{
 		stage.removeChild( me );
+	};
+
+	// -----------------------------------------
+	// ---- Others Methods -----
+
+	me.addNotice = function( noticeName )
+	{
+		me.notices.push( noticeName );
+	};	
+	
+	me.getObjQuickInfo = function()
+	{
+		return {'name': me.name
+		, 'age': me.age
+		, 'size': me.size
+		, 'speed': me.speed
+		, 'attr': me.attribute };
 	};
 
 	// -----------------------------------------
@@ -567,6 +579,25 @@ Util.getRandFromList = function( list )
 	return list[ randIndex ];
 };
 
+
+Util.outputMsgAdd = function( msg, durationSec )
+{
+	var divMsgTag = $( "#divMsg" );
+	
+	var quickMsgTag = $( '<div class="quickMsg"></div>' );
+	quickMsgTag.text( msg );
+
+	divMsgTag.append( quickMsgTag );
+
+	if ( durationSec )
+	{
+		setTimeout( function() {
+			quickMsgTag.remove();
+		}, durationSec * 1000 );
+	}
+};
+
+
 </script>
 
 
@@ -575,12 +606,14 @@ Util.getRandFromList = function( list )
 <body>
 
   <canvas id="demoCanvas" width="700" height="500" style="background-color: #FDD;"></canvas>
-  <div id="divMsg" style="border: 1px solid #555;">
+  <div id="divMsg" style="border: 1px solid #bbbbbb;">
   </div>
 
   <script>
-	var canvasStage = new CanvasStage();
-	canvasStage.startUp();
+	  $(document).ready(function(){
+		var canvasStage = new CanvasStage();
+		canvasStage.startUp();
+	  });
   </script>
 
 </body>
