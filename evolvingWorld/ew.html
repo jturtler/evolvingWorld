@@ -18,6 +18,10 @@
 //	- PhysicsHandler	- Class to manage physical related decision/detection --> collision with something..  detect bounds..
 //						- Based on each object location..
 
+
+// stage.addChild <-- We should only do this when we draw?  Remove it everytime?
+
+
 // --------------------------------------
 // -- Some data Class
 function INFO() {};
@@ -177,7 +181,8 @@ function PhysicsHandler( canvas_width, canvas_height )
 	
 	me.canvas_width = canvas_width;
 	me.canvas_height = canvas_height;
-
+	me.proxyDistance = 100;
+	//me.runOnce = true;
 	//me.stageObj = stageObj;
 
 	me.performPhysics = function( stageObj )
@@ -188,11 +193,14 @@ function PhysicsHandler( canvas_width, canvas_height )
 
 			me.wallReachedNotice( childObj, me.canvas_width, me.canvas_height );
 
-			//me.objectProximityNotice( childObj, stageObj.children );
+			//if ( me.runOnce ) 
+			me.objectProximityNotice( childObj, stageObj.children );
 		}
 
 		// 2. notify the object collision detection
 		// 3. notify the other objects in proximity detection
+
+		//me.runOnce = false;
 	};
 
 
@@ -209,6 +217,84 @@ function PhysicsHandler( canvas_width, canvas_height )
 		else if ( ObjectLoc_Right >= canvas_width && childObj.movementX > 0 ) childObj.addNotice( "reachedWall_Right" );
 		else if ( ObjectLoc_Top <= 0 && childObj.movementY < 0 ) childObj.addNotice( "reachedWall_Top" );
 		else if ( ObjectLoc_Bottom >= canvas_height && childObj.movementY > 0 ) childObj.addNotice( "reachedWall_Bottom" );		
+	};
+
+
+	me.objectProximityNotice = function( childObj, children )
+	{
+		var objInProxyList = {};
+
+		children.forEach( otherChild => 
+		{
+			if ( childObj != otherChild )
+			{
+				var distBtw = me.getDistance( childObj, otherChild );
+
+				if ( distBtw < me.proxyDistance )
+				{
+					var orderedCombo = me.getObj_OrderedCombo( childObj, otherChild );
+
+					// Only add if not already in - find by key (property)
+					if ( !objInProxyList[ orderedCombo.key ] ) objInProxyList[ orderedCombo.key ] = orderedCombo.objs;
+				}
+			}
+		});
+
+		// Draw line btween
+		Object.keys( objInProxyList ).forEach( key => 
+		{
+			var item = objInProxyList[ key ];
+
+			me.drawProxyLine( item );
+		});
+
+		// https://7thzero.com/blog/how-draw-line-using-createjs-easeljs
+	};
+
+
+	me.getObj_OrderedCombo = function( obj1, obj2 )
+	{
+		var orderedCombo = { 'key': '', 'objs': {} };
+
+		if ( obj1.name < obj2.name )
+		{
+			orderedCombo.key = obj1.name + ':' + obj2.name;
+			orderedCombo.objs.obj1 = obj1;
+			orderedCombo.objs.obj2 = obj2;			
+		}
+		else 
+		{
+			orderedCombo.key = obj2.name + ':' + obj1.name;
+			orderedCombo.objs.obj1 = obj2;
+			orderedCombo.objs.obj2 = obj1;
+		}
+
+		return orderedCombo;
+	};
+
+
+	me.getDistance = function( obj1, obj2 ) 
+	{ 
+		var xA = obj1.x;
+		var yA = obj1.y;
+		var xB = obj2.x;
+		var yB = obj2.y;
+
+		var xDiff = xA - xB; 
+		var yDiff = yA - yB;
+
+		return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+	};
+
+
+	me.drawProxyLine = function( objs )
+	{
+		if ( objs && objs.obj1 && objs.obj2 )
+		{
+			console.log( 'drawing proxy line' );
+
+			objs.obj1.paintProxyLine( objs.obj2 );
+		}
 	};
 
 }
@@ -428,8 +514,6 @@ function Kid( stage, name, attribute, locationX, locationY )
 
 			me.size = me.setSizeByAgeChange( me.size, ageDiff, newAge, me.middleAge );
 
-			console.log( 'new size: ' + me.size );
-
 			me.setLabelChange( me.age );
 		}
 	};
@@ -468,6 +552,19 @@ function Kid( stage, name, attribute, locationX, locationY )
 			graphics.endFill();
 		}
 	};
+
+	me.paintProxyLine = function( obj2 )
+	{
+		var grp = me.shape.graphics;
+
+		if ( grp && obj2 )
+		{
+			grp.setStrokeStyle(4).beginStroke("#000000");
+			grp.moveTo( me.x, me.y );
+			grp.lineTo( obj2.x, obj2.y );
+			grp.endStroke();
+		}
+	}
 
 	me.setLabelChange = function( age )
 	{
