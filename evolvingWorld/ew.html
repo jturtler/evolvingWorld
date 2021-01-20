@@ -10,6 +10,7 @@
 
 <script>
 // CreateJS / easelJS Referenece Doc: http://www.createjs.com/getting-started
+//		Google Doc:	https://docs.google.com/document/d/11620kT9Nmc5_p4mYg3t4ClwXM5KSLKS2xj474nmeRqs/edit?ts=5ff9203f
 // Classes:
 //	- CanvasStage Class - Main Stage Class, Starting point
 //  - Kids Class 		- Kids object...
@@ -27,7 +28,8 @@
 function INFO() {};
 INFO.AGING_COLOR = "silver";
 INFO.WALL_CONTACT_COLOR = "red";
-
+INFO.stage;
+INFO.kids = [];
 
 // --------------------------------------
 // -- CanvasStage Class
@@ -48,6 +50,7 @@ function CanvasStage()
 	{
 		// -- Setup Stage and Objects
 		var stageObj = new createjs.Stage( "demoCanvas" ); //me.setUp_StageObj();
+		INFO.stage = stageObj;
 
 		// -- Render Objects In Stage
 		me.setUp_TickRendering( stageObj );
@@ -60,7 +63,7 @@ function CanvasStage()
 		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
 		me.kidsBuilder.createKids( me._initialKidsNum );
 
-		me.physicsHandler = new PhysicsHandler( me.canvas_width, me.canvas_height );
+		me.physicsHandler = new PhysicsHandler( stageObj, me.canvas_width, me.canvas_height );
 	};
 
 
@@ -97,12 +100,12 @@ function CanvasStage()
 		if ( !me._bStop )
 		{
 			// NOTE: Put this in 'PhysicsHandler'?
-			for ( i = 0; i < stageObj.numChildren; i++ )
-			{
-				stageObj.getChildAt( i ).performNext(); // performAction?
-			}
+			INFO.kids.forEach( (kid, i, list) => {
+				kid.performNext();
+				if ( kid.died ) list.splice(i, 1);
+			});
 
-			me.physicsHandler.performPhysics( stageObj );
+			me.physicsHandler.performPhysics( INFO.kids );
 
 			stageObj.update();
 		}
@@ -157,6 +160,7 @@ function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 		// TODO: Need to randomly give diff attributes to the kids...
 		var kidObj = me.createContainer( Kid, name, Builder.newAttribute(), Builder.newLocationXY( canvasWidth, canvasHeight ) );
 		me.stageObj.addChild( kidObj );
+		INFO.kids.push( kidObj );
 
 		me.kidNo++;
 
@@ -175,80 +179,73 @@ function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 
 // ---------------
 
-function PhysicsHandler( canvas_width, canvas_height )
+function PhysicsHandler( stageObj, canvas_width, canvas_height )
 {
 	var me = this;
 	
+	me.stageObj = stageObj;
 	me.canvas_width = canvas_width;
 	me.canvas_height = canvas_height;
 	me.proxyDistance = 100;
+	me.proxyLines = [];
 	//me.runOnce = true;
-	//me.stageObj = stageObj;
 
-	me.performPhysics = function( stageObj )
+	me.performPhysics = function( kids )
 	{
-		for ( i = 0; i < stageObj.numChildren; i++ )
+		// reset
+		var objInProxyList = {};
+
+		// clear proxy lines
+		me.clearProxyLines( me.proxyLines, me.stageObj );
+
+		// go through each kids and perform physics related tasks..
+		kids.forEach( kid => 
 		{
-			var childObj = stageObj.getChildAt( i );
+			me.wallReachedNotice( kid, me.canvas_width, me.canvas_height);
 
-			me.wallReachedNotice( childObj, me.canvas_width, me.canvas_height );
+			me.collectObjectProximity( kid, kids, objInProxyList);
+		});
 
-			//if ( me.runOnce ) 
-			me.objectProximityNotice( childObj, stageObj.children );
-		}
+		// Draw line btween
+		me.addAndDrawProxyLine( objInProxyList, me.proxyLines, me.stageObj );
+		// https://7thzero.com/blog/how-draw-line-using-createjs-easeljs
 
-		// 2. notify the object collision detection
-		// 3. notify the other objects in proximity detection
-
-		//me.runOnce = false;
 	};
 
 
-	me.wallReachedNotice = function( childObj, canvas_width, canvas_height )
+	me.wallReachedNotice = function( kid, canvas_width, canvas_height )
 	{
-		var ObjectLoc_Left = childObj.x - childObj.size;
-		var ObjectLoc_Right = childObj.x + childObj.size;
-		var ObjectLoc_Top = childObj.y - childObj.size;
-		var ObjectLoc_Bottom = childObj.y + childObj.size;
+		var ObjectLoc_Left = kid.x - kid.size;
+		var ObjectLoc_Right = kid.x + kid.size;
+		var ObjectLoc_Top = kid.y - kid.size;
+		var ObjectLoc_Bottom = kid.y + kid.size;
 
 		// When reaching left wall, we only notify it if it reach the position of 0 or less
 		//	And the direction was left (minus), not right or straight down.
-		if ( ObjectLoc_Left <= 0 && childObj.movementX < 0 ) childObj.addNotice( "reachedWall_Left" );
-		else if ( ObjectLoc_Right >= canvas_width && childObj.movementX > 0 ) childObj.addNotice( "reachedWall_Right" );
-		else if ( ObjectLoc_Top <= 0 && childObj.movementY < 0 ) childObj.addNotice( "reachedWall_Top" );
-		else if ( ObjectLoc_Bottom >= canvas_height && childObj.movementY > 0 ) childObj.addNotice( "reachedWall_Bottom" );		
+		if ( ObjectLoc_Left <= 0 && kid.movementX < 0 ) kid.addNotice( "reachedWall_Left" );
+		else if ( ObjectLoc_Right >= canvas_width && kid.movementX > 0 ) kid.addNotice( "reachedWall_Right" );
+		else if ( ObjectLoc_Top <= 0 && kid.movementY < 0 ) kid.addNotice( "reachedWall_Top" );
+		else if ( ObjectLoc_Bottom >= canvas_height && kid.movementY > 0 ) kid.addNotice( "reachedWall_Bottom" );		
 	};
 
 
-	me.objectProximityNotice = function( childObj, children )
+	me.collectObjectProximity = function( kid, kids, objInProxyList )
 	{
-		var objInProxyList = {};
-
-		children.forEach( otherChild => 
+		kids.forEach( otherKid => 
 		{
-			if ( childObj != otherChild )
+			if ( kid != otherKid )
 			{
-				var distBtw = me.getDistance( childObj, otherChild );
+				var distBtw = me.getDistance( kid, otherKid );
 
 				if ( distBtw < me.proxyDistance )
 				{
-					var orderedCombo = me.getObj_OrderedCombo( childObj, otherChild );
+					var orderedCombo = me.getObj_OrderedCombo( kid, otherKid );
 
 					// Only add if not already in - find by key (property)
 					if ( !objInProxyList[ orderedCombo.key ] ) objInProxyList[ orderedCombo.key ] = orderedCombo.objs;
 				}
 			}
 		});
-
-		// Draw line btween
-		Object.keys( objInProxyList ).forEach( key => 
-		{
-			var item = objInProxyList[ key ];
-
-			me.drawProxyLine( item );
-		});
-
-		// https://7thzero.com/blog/how-draw-line-using-createjs-easeljs
 	};
 
 
@@ -287,14 +284,35 @@ function PhysicsHandler( canvas_width, canvas_height )
 	};
 
 
-	me.drawProxyLine = function( objs )
+	me.clearProxyLines = function( proxyLines, stageObj )
 	{
-		if ( objs && objs.obj1 && objs.obj2 )
+		proxyLines.forEach( ( line, i, list ) => 
 		{
-			console.log( 'drawing proxy line' );
+			stageObj.removeChild( line );
+			list.splice(i, 1);			
+		});
+	}
 
-			objs.obj1.paintProxyLine( objs.obj2 );
-		}
+	me.addAndDrawProxyLine = function( objInProxyList, proxyLines, stageObj )
+	{
+		Object.keys( objInProxyList ).forEach( key => 
+		{ 
+			var item = objInProxyList[key];
+
+			if (item && item.obj1 && item.obj2) 
+			{
+				var obj1 = item.obj1;
+				var obj2 = item.obj2;
+
+				var line = new createjs.Shape();
+
+				line.graphics.setStrokeStyle(1).beginStroke('green').moveTo(obj1.x, obj1.y).lineTo(obj2.x, obj2.y).endStroke();
+
+				stageObj.addChild(line);
+				proxyLines.push(line);
+			}
+
+		});
 	};
 
 }
@@ -345,8 +363,8 @@ function Kid( stage, name, attribute, locationX, locationY )
 	me.color;
 	me.speed;
 
-	me.locationX = locationX;
-	me.locationY = locationY;
+	me.x = locationX;
+	me.y = locationY;
 
 	me.notices = [];
 	
@@ -366,6 +384,8 @@ function Kid( stage, name, attribute, locationX, locationY )
 
 	me.collision;
 	me.printStatus = false;
+
+	me.died = false;
 
 	// --------------------
 	// Object Layer
@@ -389,7 +409,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 
 		me.addChild( me.shape, me.label );
 
-		me.setLocation( me.locationX, me.locationY );
+		me.setLocation( me.x, me.y );
 
 		me.setDirection_Random( me.speed );
 
@@ -434,6 +454,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 		if ( me.size <= 0 )
 		{
 			me.deleteThisKid( me.stage );
+			me.died = true;
 		}	
 		else
 		{
@@ -514,7 +535,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 
 			me.size = me.setSizeByAgeChange( me.size, ageDiff, newAge, me.middleAge );
 
-			me.setLabelChange( me.age );
+			//me.setLabelChange( me.age );
 		}
 	};
 
@@ -553,22 +574,9 @@ function Kid( stage, name, attribute, locationX, locationY )
 		}
 	};
 
-	me.paintProxyLine = function( obj2 )
-	{
-		var grp = me.shape.graphics;
-
-		if ( grp && obj2 )
-		{
-			grp.setStrokeStyle(4).beginStroke("#000000");
-			grp.moveTo( me.x, me.y );
-			grp.lineTo( obj2.x, obj2.y );
-			grp.endStroke();
-		}
-	}
-
 	me.setLabelChange = function( age )
 	{
-		me.label.text = me.name + "\n" + age;
+		me.label.text = me.name; // + "\n" + age;
 	};
 
 	// ----------------------------------
@@ -648,7 +656,9 @@ function Kid( stage, name, attribute, locationX, locationY )
 		, 'age': me.age
 		, 'size': me.size
 		, 'speed': me.speed
-		, 'attr': me.attribute };
+		, 'attr': me.attribute
+		, 'loc': [me.x.toFixed(0), me.y.toFixed(0)] 
+		};
 	};
 
 	// -----------------------------------------
