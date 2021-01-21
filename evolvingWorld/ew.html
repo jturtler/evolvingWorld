@@ -41,7 +41,7 @@ function CanvasStage()
 	me.canvas_height = 500; 
 
 	me._bStop = false;
-	me._initialKidsNum = 5;
+	me._initialKidsNum = 10;
 	me.kidsBuilder;
 	me.physicsHandler;
 	// -------------------
@@ -52,18 +52,19 @@ function CanvasStage()
 		var stageObj = new createjs.Stage( "demoCanvas" ); //me.setUp_StageObj();
 		INFO.stage = stageObj;
 
+		// --- Initial Kids Build using 'KidsBuilder' class.
+		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
+		me.physicsHandler = new PhysicsHandler( stageObj, me.canvas_width, me.canvas_height );
+
+
+		me.kidsBuilder.createKids( me._initialKidsNum );
+		
+		
 		// -- Render Objects In Stage
 		me.setUp_TickRendering( stageObj );
 
 		// -- Key Action Setup
-		me.setUp_KeyDownAction( stageObj );
-
-
-		// --- Initial Kids Build using 'KidsBuilder' class.
-		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
-		me.kidsBuilder.createKids( me._initialKidsNum );
-
-		me.physicsHandler = new PhysicsHandler( stageObj, me.canvas_width, me.canvas_height );
+		me.setUp_KeyDown_BtnClicks( stageObj );
 	};
 
 
@@ -83,12 +84,20 @@ function CanvasStage()
 	};
 
 
-	me.setUp_KeyDownAction = function( stageObj )
+	me.setUp_KeyDown_BtnClicks = function( stageObj )
 	{
+
+		// key down handle
 		window.onkeydown = function( event )
 		{
 			me.handleKeyDown( event, stageObj );	
 		};
+
+
+		// btn clicks handle
+		$( '#btnStartStop' ).click( me.stopStart );
+		$( '#btnAddKid' ).click( me.kidsBuilder.createKid );
+
 
 		Util.outputMsgAdd( "Key: 's' to stop/start, 'a' to add new kid" );
 	};
@@ -118,22 +127,23 @@ function CanvasStage()
 		switch( event.keyCode ) 
 		{
 			case 83: //_keycode_s: 
-				
-				me._bStop = !me._bStop;
-
-				var msg = ( me._bStop ) ? "Stopped" : "Started";
-				//createjs.Ticker.setPaused( me._bStop );
-				Util.outputMsgAdd( msg, 4 );
-
+				me.stopStart();
 				return false;
-			case 65: //_keycode_a:
-				
-				//me.addKid( stageObj );
-				var kidObj = me.kidsBuilder.createKid();				
 
+			case 65: //_keycode_a:				
+				var kidObj = me.kidsBuilder.createKid();				
 				return false;
 		}
 	};
+
+	me.stopStart = function()
+	{
+		me._bStop = !me._bStop;
+		var msg = ( me._bStop ) ? "Stopped" : "Started";
+		Util.outputMsgAdd( msg, 4 );
+	};
+
+
 }
 
 // --------------------------------------
@@ -713,8 +723,8 @@ Util.outputMsgAdd = function( msg, durationSec )
 <body>
 
   <canvas id="demoCanvas" width="700" height="500" style="background-color: #FDD;"></canvas>
-  <div id="divMsg" style="border: 1px solid #bbbbbb;">
-  </div>
+  <div style="margin: 5px;"><button id="btnStartStop">Stop</button> <button id="btnAddKid" style="margin-left: 7px;">Add Kid</button> </div>
+  <div id="divMsg" style="border: 1px solid #bbbbbb;"></div>
 
   <script>
 	  $(document).ready(function(){
