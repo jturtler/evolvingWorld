@@ -96,7 +96,7 @@ function CanvasStage()
 
 		// btn clicks handle
 		$( '#btnStartStop' ).click( me.stopStart );
-		$( '#btnAddKid' ).click( me.kidsBuilder.createKid );
+		$( '#btnAddKid' ).click( function() { me.kidsBuilder.createKid(); } );
 
 
 		Util.outputMsgAdd( "Key: 's' to stop/start, 'a' to add new kid" );
