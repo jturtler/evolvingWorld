@@ -19,8 +19,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.x = locationX;
   me.y = locationY;
 
-  me.notices = [];
-
+  me.wallTouches = [];
   // ----------------------------
 
   me.movementX;
@@ -88,7 +87,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.performNext = function () {
     // 1st, make the directional location one movement
-    me.moveNext(me.notices);
+    me.moveNext(me.wallTouches);
 
     // --------------
 
@@ -108,8 +107,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.displayFlash(me.flashAction);
     }
 
-    // clear notices after each perform
-    me.notices = [];
+    // clear wallTouches after each perform
+    me.wallTouches = [];
   };
 
   // ------------  Flash Action Related ---------
@@ -215,19 +214,20 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.movementY = Math.sin(angle) * speed;
   };
 
-  me.setDirection_Bounce = function (notices) {
+  me.setDirection_Bounce = function (wallTouches) {
     var bBounce = false;
 
-    if (notices.indexOf('reachedWall_Left') >= 0) {
+    
+    if (wallTouches.indexOf('reachedWall_Left') >= 0) {
       me.movementX = -me.movementX;
       bBounce = true;
-    } else if (notices.indexOf('reachedWall_Right') >= 0) {
+    } else if (wallTouches.indexOf('reachedWall_Right') >= 0) {
       me.movementX = -me.movementX;
       bBounce = true;
-    } else if (notices.indexOf('reachedWall_Top') >= 0) {
+    } else if (wallTouches.indexOf('reachedWall_Top') >= 0) {
       me.movementY = -me.movementY;
       bBounce = true;
-    } else if (notices.indexOf('reachedWall_Bottom') >= 0) {
+    } else if (wallTouches.indexOf('reachedWall_Bottom') >= 0) {
       me.movementY = -me.movementY;
       bBounce = true;
     }
@@ -236,8 +236,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.addFlashAction(3, 'innerCircle', INFO.WALL_CONTACT_COLOR, 70);
   };
 
-  me.moveNext = function (notices) {
-    me.setDirection_Bounce(notices);
+  me.moveNext = function (wallTouches) {
+    me.setDirection_Bounce(wallTouches);
 
     me.setLocation(me.x + me.movementX, me.y + me.movementY);
   };
@@ -268,8 +268,9 @@ function Kid(stage, name, attribute, locationX, locationY) {
   // -----------------------------------------
   // ---- Others Methods -----
 
-  me.addNotice = function (noticeName) {
-    me.notices.push(noticeName);
+  me.addNotice_WallTouched = function ( notice ) 
+  {
+    me.wallTouches.push( notice );
   };
 
   me.getObjQuickInfo = function () {

@@ -37,3 +37,31 @@ Util.outputMsgAdd = function (msg, durationSec) {
     }, durationSec * 1000);
   }
 };
+
+
+Util.getFromList = function( list, propertyName, value )
+{
+	var item;
+
+	if ( list )
+	{
+		// If propertyName being compare to has not been passed, set it as 'id'.
+		if ( propertyName === undefined )
+		{
+			propertyName = "id";
+		}
+
+		for( i = 0; i < list.length; i++ )
+		{
+			var listItem = list[i];
+
+			if ( listItem[propertyName] && listItem[propertyName] === value )
+			{
+				item = listItem;
+				break;
+			}
+		}
+	}
+
+	return item;
+};
