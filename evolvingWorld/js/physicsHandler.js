@@ -59,7 +59,7 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
       {
         var distBtw = me.getDistance(kid, otherKid);
 
-        if (distBtw < me.proxyDistance) 
+        if (distBtw < me.getProxyDistance( kid, otherKid ) ) 
         {
           var orderedCombo = me.getObj_OrderedCombo(kid, otherKid, distBtw);
 
@@ -70,6 +70,29 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
       }
     });
   };
+
+
+  me.getProxyDistance = function( kid1, kid2 )
+  {
+    var proxyDistance = 100;
+    // Rather than using 100 as proxy distance, let's calculate the proxy - relative to object size(radius)
+    // If radius is '10', the detection range could be 2 ~ 3 times the radius.. (of bigger object..)
+
+    // In later time, the detection range should be for each object.  
+    var biggerObjSize = ( kid1.size > kid2.size ) ? kid1.size : kid2.size;
+
+    if ( biggerObjSize < 40 )
+    {
+      proxyDistance = 100;
+    }
+    else if ( biggerObjSize > 40 )
+    {
+      proxyDistance = biggerObjSize * 2.5;
+    }
+
+    return proxyDistance;
+  };
+
 
   me.getObj_OrderedCombo = function (obj1, obj2, distance) 
   {
