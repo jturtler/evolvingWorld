@@ -73,7 +73,7 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
 
   me.getObj_OrderedCombo = function (obj1, obj2, distance) 
   {
-    var orderedCombo = { key: '', objs: {}, distance: distance };
+    var orderedCombo = { key: '', objs: {} };
 
     if (obj1.name < obj2.name) {
       orderedCombo.key = obj1.name + ':' + obj2.name;
@@ -84,6 +84,8 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
       orderedCombo.objs.obj1 = obj2;
       orderedCombo.objs.obj2 = obj1;
     }
+
+    orderedCombo.objs.distance = distance;
 
     return orderedCombo;
   };
@@ -170,10 +172,25 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
   me.kidsAbsorb = function( kid1, kid2 )
   {
     // Both kids stop moving..
-    // kid1.stay();  kid2.stay();
+    // kid1.moveCloser( kids2 );  kid2.stay();
+
+    // kids.setModeInteract( true );
 
     // 'size' bigger one takes size 2 from smaller one, but bigger one only takes 50%, size 1.
-    
+    if ( kid1.size > kid2.size )
+    {
+      kid2.size = kid2.size - 2;
+      kid1.size++;      
+
+      console.log( 'kid1 size win' );
+    } 
+    else if ( kid1.size < kid2.size )
+    {
+      kid1.size = kid1.size - 2;
+      kid2.size++;      
+
+      console.log( 'kid2 size win' );
+    }   
 
   };  
 

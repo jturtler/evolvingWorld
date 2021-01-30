@@ -25,6 +25,10 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.movementX;
   me.movementY;
 
+  me.modeInteract = false;
+
+  // ----------------------------
+
   me.tickCount = 0;
   me.age = 0;
   me.agingSpeed = 40; // higher would make it age slower.
@@ -87,7 +91,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.performNext = function () {
     // 1st, make the directional location one movement
-    me.moveNext(me.wallTouches);
+    me.moveNext(me.wallTouches, me.modeInteract );
 
     // --------------
 
@@ -236,10 +240,16 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.addFlashAction(3, 'innerCircle', INFO.WALL_CONTACT_COLOR, 70);
   };
 
-  me.moveNext = function (wallTouches) {
-    me.setDirection_Bounce(wallTouches);
+  me.moveNext = function( wallTouches, modeInteract ) 
+  {
+    if ( modeInteract ) {}
+    else
+    {
+      // sets me.movementX, me.movementY
+      me.setDirection_Bounce(wallTouches);
 
-    me.setLocation(me.x + me.movementX, me.y + me.movementY);
+      me.setLocation(me.x + me.movementX, me.y + me.movementY);
+    }
   };
 
   me.setLocation = function (locX, locY) {
