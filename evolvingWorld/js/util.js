@@ -6,6 +6,7 @@ INFO.AGING_COLOR = 'silver';
 INFO.WALL_CONTACT_COLOR = 'red';
 INFO.stage;
 INFO.kids = [];
+INFO.items = [];
 
 function Util() {}
 
@@ -38,30 +39,24 @@ Util.outputMsgAdd = function (msg, durationSec) {
   }
 };
 
+Util.getFromList = function (list, propertyName, value) {
+  var item;
 
-Util.getFromList = function( list, propertyName, value )
-{
-	var item;
+  if (list) {
+    // If propertyName being compare to has not been passed, set it as 'id'.
+    if (propertyName === undefined) {
+      propertyName = 'id';
+    }
 
-	if ( list )
-	{
-		// If propertyName being compare to has not been passed, set it as 'id'.
-		if ( propertyName === undefined )
-		{
-			propertyName = "id";
-		}
+    for (i = 0; i < list.length; i++) {
+      var listItem = list[i];
 
-		for( i = 0; i < list.length; i++ )
-		{
-			var listItem = list[i];
+      if (listItem[propertyName] && listItem[propertyName] === value) {
+        item = listItem;
+        break;
+      }
+    }
+  }
 
-			if ( listItem[propertyName] && listItem[propertyName] === value )
-			{
-				item = listItem;
-				break;
-			}
-		}
-	}
-
-	return item;
+  return item;
 };
