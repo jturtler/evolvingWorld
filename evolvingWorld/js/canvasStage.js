@@ -1,6 +1,6 @@
 //	- CanvasStage Class - Main Stage Class, Starting point
-
-function CanvasStage() {
+function CanvasStage() 
+{
   var me = this;
 
   me.canvas_width = 700; // must match the '<canvas>' tag width
@@ -10,32 +10,29 @@ function CanvasStage() {
   me._initialKidsNum = 10;
   me.kidsBuilder;
   me.physicsHandler;
+  me.framerate = 10;  // 10 frame per sec..
+
+  me.stageObj;
+  me.kids = [];
   // -------------------
 
   me.startUp = function () {
     // -- Setup Stage and Objects
-    var stageObj = new createjs.Stage('demoCanvas'); //me.setUp_StageObj();
-    INFO.stage = stageObj;
+    me.stageObj = new createjs.Stage('demoCanvas'); //me.setUp_StageObj();
+    CanvasStage.stageObj = me.stageObj;
 
     // --- Initial Kids Build using 'KidsBuilder' class.
-    me.kidsBuilder = new KidsBuilder(
-      stageObj,
-      me.canvas_width,
-      me.canvas_height
-    );
-    me.physicsHandler = new PhysicsHandler(
-      stageObj,
-      me.canvas_width,
-      me.canvas_height
-    );
+    me.kidsBuilder = new KidsBuilder( me.stageObj, me.kids, me.canvas_width, me.canvas_height );
+    me.physicsHandler = new PhysicsHandler( me.stageObj, me.canvas_width, me.canvas_height );
+
 
     me.kidsBuilder.createKids(me._initialKidsNum);
 
     // -- Render Objects In Stage
-    me.setUp_TickRendering(stageObj);
+    me.setUp_TickRendering(me.stageObj);
 
     // -- Key Action Setup
-    me.setUp_KeyDown_BtnClicks(stageObj);
+    me.setUp_KeyDown_BtnClicks(me.stageObj);
   };
 
   // ---------------------------------------------------
@@ -46,7 +43,7 @@ function CanvasStage() {
   };
 
   me.setUp_TickRendering = function (stageObj) {
-    createjs.Ticker.framerate = 10;
+    createjs.Ticker.framerate = me.framerate;
     createjs.Ticker.addEventListener('tick', function (event) {
       me.tickRender(stageObj);
     });
@@ -72,12 +69,12 @@ function CanvasStage() {
   me.tickRender = function (stageObj) {
     if (!me._bStop) {
       // NOTE: Put this in 'PhysicsHandler'?
-      INFO.kids.forEach((kid, i, list) => {
+      me.kids.forEach((kid, i, list) => {
         kid.performNext();
         if (kid.died) list.splice(i, 1);
       });
 
-      me.physicsHandler.performPhysics(INFO.kids);
+      me.physicsHandler.performPhysics(me.kids);
 
       stageObj.update();
     }
@@ -87,6 +84,7 @@ function CanvasStage() {
   me.handleKeyDown = function (event, stageObj) {
     switch (event.keyCode) {
       case 83: //_keycode_s:
+      case 32: //_keycode space:
         me.stopStart();
         return false;
 
