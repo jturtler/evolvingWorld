@@ -7,7 +7,7 @@ Builder.OBJ_COLOR_LIST = ['#7C9AFC', '#A0DE8F', '#F0F58C', 'Orange'];
 Builder.newAttribute = function () {
   var attrJson = {};
 
-  attrJson.speed = Util.getRandNumBtw(1, 7);
+  attrJson.speed = Util.getRandNumBtw(5, 8);
   attrJson.size = Util.getRandNumBtw(4, 20); // radius
   attrJson.color = Util.getRandFromList(Builder.OBJ_COLOR_LIST);
 

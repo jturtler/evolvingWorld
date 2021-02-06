@@ -1,11 +1,12 @@
 
 //	- KidsBuilder Class - Builder class for Kids Object
 
-function KidsBuilder(stageObj, canvasWidth, canvasHeight) 
+function KidsBuilder(stageObj, kids, canvasWidth, canvasHeight) 
 {
     var me = this;
   
     me.stageObj = stageObj;
+    me.kids = kids;
     me.kidNo = 0;
   
     me.createKids = function (kidsNum) {
@@ -25,7 +26,7 @@ function KidsBuilder(stageObj, canvasWidth, canvasHeight)
         Builder.newLocationXY(canvasWidth, canvasHeight)
       );
       me.stageObj.addChild(kidObj);
-      INFO.kids.push(kidObj);
+      me.kids.push(kidObj);
   
       me.kidNo++;
   

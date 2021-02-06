@@ -25,15 +25,24 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.movementX;
   me.movementY;
 
+  me.directionAngle;  // NEW
+  me.changeAngle = 0;  // OBSOLETE
+
   me.modeInteract = false;
 
   // ----------------------------
 
   me.tickCount = 0;
   me.age = 0;
-  me.agingSpeed = 40; // higher would make it age slower.
+  me.agingSpeed = 40; // frameRate = 10 (per seconds). Thus, every 4 seconds, it ages.. But, we should not conver to seconds
+  //   since we can later use 'frameRate' to speed up / speed down...
+
   me.middleAge = 10;
   me.sizeIncreaseRate = 2;
+
+  me.directionChange_Rate = 20;    // NEW
+  me.directionChange_DegreeLimit = 45;    // NEW // +/- 30 degree
+
 
   me.flashActionNextId = 0;
   me.flashAction = {}; // id: { count: 0, action: "", color: "", sizePercentage: "" };
@@ -64,7 +73,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
     me.setLocation(me.x, me.y);
 
-    me.setDirection_Random(me.speed);
+    me.directionAngle = Math.random() * 360;
+    me.setDirectionXY_ByAngle( me.directionAngle, me.speed );
 
     me.setUpClick();
   };
@@ -81,9 +91,6 @@ function Kid(stage, name, attribute, locationX, locationY) {
     console.log('click test: ' + me.name);
 
     Util.outputMsgAdd(JSON.stringify(me.getObjQuickInfo()), 10);
-
-    //me.addFlashAction( 10, "innerCircle", "#8A13AD", 50 );
-    //me.setDirection_Random( me.speed );
   };
 
   // -----------------------------------
@@ -96,14 +103,22 @@ function Kid(stage, name, attribute, locationX, locationY) {
     // --------------
 
     me.tickCount++;
-    var newAge = Math.floor(me.tickCount / me.agingSpeed);
 
-    me.changeByAge(newAge);
+    var newAge = Math.floor( me.tickCount / me.agingSpeed );
+    me.changeByAge(newAge);  // Not too good...  Changes age & size..
 
-    if (me.size <= 0) {
+    // Direction
+    me.setDirectionChange_InFrequency( me.tickCount, me.directionChange_Rate, me.directionChange_DegreeLimit );
+
+    // -----------------------
+
+    if (me.size <= 0) 
+    {
       me.deleteThisKid(me.stage);
       me.died = true;
-    } else {
+    } 
+    else 
+    {
       // paint over - after clearing
       me.paintClear(me.shape.graphics);
       me.paintShape(me.color, me.size, me.shape.graphics);
@@ -169,7 +184,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.age = newAge;
 
       // Add short term flash when age is changed.
-      me.addFlashAction(2, 'outerCircle', INFO.AGING_COLOR, 2);
+      me.addFlashAction(2, 'outerCircle', Constants.AGING_COLOR, 2);
 
       me.size = me.setSizeByAgeChange(me.size, ageDiff, newAge, me.middleAge);
 
@@ -188,6 +203,33 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
     return newSize;
   };
+
+  // ----------------------------
+  me.setDirectionChange_InFrequency = function( tickCount, directionChange_Rate, directionChange_DegreeLimit )
+  {
+    if ( tickCount !== 0 )
+    {
+      var remainder = tickCount % directionChange_Rate;
+
+      if ( remainder === 0 )
+      {        
+       // Angles ranging: +30  ~ -30 
+        me.changeAngle = ( ( directionChange_DegreeLimit * 2 ) * Math.random() ) - directionChange_DegreeLimit;
+
+        // TODO: Replace Random with the objects nearby location direction?
+
+        me.directionAngle += me.changeAngle;
+        
+        // Since angles are always positive, add 360 and divide by 360 to get only remainder.
+        me.directionAngle = ( me.directionAngle + 360 ) % 360;
+        
+        me.setDirectionXY_ByAngle( me.directionAngle, me.speed );
+      }  
+    }
+  };
+
+
+  // ----------------------------
 
   me.paintClear = function (graphics) {
     if (graphics !== undefined) {
@@ -210,18 +252,21 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   // ----------------------------------
   // ---- Movement Related -----
+  
+  me.setDirectionXY_ByAngle = function( angle, speed ) 
+  {
+    var anglePi = Math.PI * ( angle / 180 );
 
-  me.setDirection_Random = function (speed) {
-    var angle = Math.random() * Math.PI * 2;
-
-    me.movementX = Math.cos(angle) * speed;
-    me.movementY = Math.sin(angle) * speed;
+    me.movementX = Math.cos(anglePi) * speed;
+    me.movementY = Math.sin(anglePi) * speed;
   };
 
-  me.setDirection_Bounce = function (wallTouches) {
-    var bBounce = false;
+  // ------------------------------------
 
-    
+  me.setDirection_Bounce = function (wallTouches) 
+  {
+    var bBounce = false;
+  
     if (wallTouches.indexOf('reachedWall_Left') >= 0) {
       me.movementX = -me.movementX;
       bBounce = true;
@@ -236,9 +281,28 @@ function Kid(stage, name, attribute, locationX, locationY) {
       bBounce = true;
     }
 
-    if (bBounce)
-      me.addFlashAction(3, 'innerCircle', INFO.WALL_CONTACT_COLOR, 70);
+    if ( bBounce )
+    { 
+      me.directionAngle = me.getAngleFromDirectionXY( me.movementX, me.movementY );
+
+      me.addFlashAction(3, 'innerCircle', Constants.WALL_CONTACT_COLOR, 70);
+    }
   };
+
+
+  me.getAngleFromDirectionXY = function( movementX, movementY )
+  {
+    var angle = ( Math.atan2( movementY, movementX ) / Math.PI ) * 180;
+
+    // QUESTION: Why I have to do this? 0 - 270.. somehow, 280 => -10..  () -0 ~ -90
+    if ( angle < 0 )
+    {
+      angle = angle + 360;
+    }
+
+    return angle;
+  };
+
 
   me.moveNext = function( wallTouches, modeInteract ) 
   {
@@ -252,7 +316,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
     }
   };
 
-  me.setLocation = function (locX, locY) {
+  me.setLocation = function (locX, locY) 
+  {
     if (locX) me.x = locX;
     if (locY) me.y = locY;
   };
@@ -289,8 +354,10 @@ function Kid(stage, name, attribute, locationX, locationY) {
       age: me.age,
       size: me.size,
       speed: me.speed,
+      angle: me.directionAngle.toFixed(0),
+      changeAngle: me.changeAngle,
       attr: me.attribute,
-      loc: [me.x.toFixed(0), me.y.toFixed(0)],
+      loc: [me.x.toFixed(0), me.y.toFixed(2)],
     };
   };
 

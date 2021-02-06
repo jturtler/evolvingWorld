@@ -25,11 +25,11 @@
 
 // --------------------------------------
 // -- Some data Class
-function INFO() {};
-INFO.AGING_COLOR = "silver";
-INFO.WALL_CONTACT_COLOR = "red";
-INFO.stage;
-INFO.kids = [];
+function Constants() {};
+Constants.AGING_COLOR = "silver";
+Constants.WALL_CONTACT_COLOR = "red";
+Constants.stage;
+Constants.kids = [];
 
 // --------------------------------------
 // -- CanvasStage Class
@@ -50,7 +50,7 @@ function CanvasStage()
 	{
 		// -- Setup Stage and Objects
 		var stageObj = new createjs.Stage( "demoCanvas" ); //me.setUp_StageObj();
-		INFO.stage = stageObj;
+		Constants.stage = stageObj;
 
 		// --- Initial Kids Build using 'KidsBuilder' class.
 		me.kidsBuilder = new KidsBuilder( stageObj, me.canvas_width, me.canvas_height );
@@ -109,12 +109,12 @@ function CanvasStage()
 		if ( !me._bStop )
 		{
 			// NOTE: Put this in 'PhysicsHandler'?
-			INFO.kids.forEach( (kid, i, list) => {
+			Constants.kids.forEach( (kid, i, list) => {
 				kid.performNext();
 				if ( kid.died ) list.splice(i, 1);
 			});
 
-			me.physicsHandler.performPhysics( INFO.kids );
+			me.physicsHandler.performPhysics( Constants.kids );
 
 			stageObj.update();
 		}
@@ -170,7 +170,7 @@ function KidsBuilder( stageObj, canvasWidth, canvasHeight )
 		// TODO: Need to randomly give diff attributes to the kids...
 		var kidObj = me.createContainer( Kid, name, Builder.newAttribute(), Builder.newLocationXY( canvasWidth, canvasHeight ) );
 		me.stageObj.addChild( kidObj );
-		INFO.kids.push( kidObj );
+		Constants.kids.push( kidObj );
 
 		me.kidNo++;
 
@@ -541,7 +541,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 			me.age = newAge;
 
 			// Add short term flash when age is changed.
-			me.addFlashAction( 2, "outerCircle", INFO.AGING_COLOR, 2 );
+			me.addFlashAction( 2, "outerCircle", Constants.AGING_COLOR, 2 );
 
 			me.size = me.setSizeByAgeChange( me.size, ageDiff, newAge, me.middleAge );
 
@@ -611,7 +611,7 @@ function Kid( stage, name, attribute, locationX, locationY )
 		else if ( notices.indexOf( "reachedWall_Top" ) >= 0 ) { me.movementY = -me.movementY; bBounce = true; }
 		else if ( notices.indexOf( "reachedWall_Bottom" ) >= 0 ) { me.movementY = -me.movementY; bBounce = true; }
 
-		if ( bBounce ) me.addFlashAction( 3, "innerCircle", INFO.WALL_CONTACT_COLOR, 70 );
+		if ( bBounce ) me.addFlashAction( 3, "innerCircle", Constants.WALL_CONTACT_COLOR, 70 );
 	};
 
 	me.moveNext = function( notices )

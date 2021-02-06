@@ -10,7 +10,7 @@ test test -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
 <script src="js/util.js"></script>
-<script src="js/info.js"></script>
+<script src="js/constants.js"></script>
 <script src="js/kid.js"></script>
 <script src="js/builder.js"></script>
 <script src="js/kidsBuilder.js"></script>
@@ -39,13 +39,20 @@ test test -->
 <body>
 
   <canvas id="demoCanvas" width="700" height="500" style="background-color: #FDD;"></canvas>
-  <div style="margin: 5px;"><button id="btnStartStop">Stop</button> <button id="btnAddKid" style="margin-left: 7px;">Add Kid</button> </div>
+  <div id="commands" style="margin: 5px;">
+    <button id="btnStartStop">Stop</button> 
+    <button id="btnAddKid" style="margin-left: 7px;">Add Kid</button> 
+    <input id="inputFramerate" readonly style="margin-left: 7px; width: 20px; background-color: #eee;"/> 
+    <button id="btnFramerateUp" style="margin-left: 3px;">+</button> 
+    <button id="btnFramerateDown">-</button> 
+  </div>
   <div id="divMsg" style="border: 1px solid #bbbbbb;"></div>
 
   <script>
-	  $(document).ready(function(){
-		var canvasStage = new CanvasStage();
-		canvasStage.startUp();
+	  $(document).ready(function()
+    {
+  		var _canvasStage = new CanvasStage();
+	  	_canvasStage.startUp();
 	  });
   </script>
 
