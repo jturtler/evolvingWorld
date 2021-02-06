@@ -25,8 +25,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.movementX;
   me.movementY;
 
-  me.directionAngle;
-  me.tempAngle;
+  me.directionAngle;  // NEW
+  me.changeAngle = 0;  // OBSOLETE
 
   me.modeInteract = false;
 
@@ -40,9 +40,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.middleAge = 10;
   me.sizeIncreaseRate = 2;
 
-  me.directionChange_Rate = 20;
-  me.directionChange_DegreeLimit = 45;  // +/- 30 degree
-  me.changeAngle = 0;
+  me.directionChange_Rate = 20;    // NEW
+  me.directionChange_DegreeLimit = 45;    // NEW // +/- 30 degree
 
 
   me.flashActionNextId = 0;
@@ -76,8 +75,6 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
     me.directionAngle = Math.random() * 360;
     me.setDirectionXY_ByAngle( me.directionAngle, me.speed );
-
-    //me.tempAngle = me.getAngleFromDirectionXY( me.movementX, me.movementY );
 
     me.setUpClick();
   };
@@ -264,27 +261,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.movementY = Math.sin(anglePi) * speed;
   };
 
-
-  
-  me.getAngle_ByDirectionalXY = function( movementX, movementY )
-  {
-
-
-  };
-  //directionAngle = Math.random() * 360;
-
-
-  /*
-  me.getRandom_Limited = function( speed, directionChange_DegreeLimit ) 
-  {
-    var angle =  Math.PI * ( directionChange_DegreeLimit / 180 );
-
-    // var angle = Math.random() * ( Math.PI * degreeLimit );  /// 0 - 90
-
-    me.movementX = Math.cos(angle) * speed;
-    me.movementY = Math.sin(angle) * speed;
-  };
-  */
+  // ------------------------------------
 
   me.setDirection_Bounce = function (wallTouches) 
   {
@@ -317,7 +294,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
   {
     var angle = ( Math.atan2( movementY, movementX ) / Math.PI ) * 180;
 
-    // QUESTION: Why I have to do this?
+    // QUESTION: Why I have to do this? 0 - 270.. somehow, 280 => -10..  () -0 ~ -90
     if ( angle < 0 )
     {
       angle = angle + 360;

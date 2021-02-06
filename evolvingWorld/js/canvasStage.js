@@ -27,7 +27,6 @@ function CanvasStage()
   {
     // -- Setup Stage and Objects
     me.stageObj = new createjs.Stage('demoCanvas'); //me.setUp_StageObj();
-    CanvasStage.stageObj = me.stageObj;
 
     // --- Initial Kids Build using 'KidsBuilder' class.
     me.kidsBuilder = new KidsBuilder( me.stageObj, me.kids, me.canvas_width, me.canvas_height );
