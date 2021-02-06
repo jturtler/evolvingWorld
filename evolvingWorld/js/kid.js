@@ -219,6 +219,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
        // Angles ranging: +30  ~ -30 
         me.changeAngle = ( ( directionChange_DegreeLimit * 2 ) * Math.random() ) - directionChange_DegreeLimit;
 
+        // TODO: Replace Random with the objects nearby location direction?
+
         me.directionAngle += me.changeAngle;
         
         // Since angles are always positive, add 360 and divide by 360 to get only remainder.

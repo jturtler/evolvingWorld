@@ -14,9 +14,17 @@ function CanvasStage()
 
   me.stageObj;
   me.kids = [];
+
+  // ---------------------
+
+  me.inputFramerateTag; //= $( '#inputFramerate' );
+  me.btnFramerateUpTag; //= $( '#btnFramerateUp' );
+  me.btnFramerateDownTag; //= $( '#btnFramerateDown' );
+
   // -------------------
 
-  me.startUp = function () {
+  me.startUp = function () 
+  {
     // -- Setup Stage and Objects
     me.stageObj = new createjs.Stage('demoCanvas'); //me.setUp_StageObj();
     CanvasStage.stageObj = me.stageObj;
@@ -29,10 +37,35 @@ function CanvasStage()
     me.kidsBuilder.createKids(me._initialKidsNum);
 
     // -- Render Objects In Stage
-    me.setUp_TickRendering(me.stageObj);
+    me.setUp_TickRendering( me.stageObj, me.framerate );
 
     // -- Key Action Setup
     me.setUp_KeyDown_BtnClicks(me.stageObj);
+
+
+    // ----------------------
+    // Setup HTML Tag related
+
+    me.inputFramerateTag = $( '#inputFramerate' );    
+    me.inputFramerateTag.val( me.framerate );
+
+    $( '#btnFramerateUp' ).click( function() 
+    {
+      me.framerate += 5;
+      console.log( me.framerate );
+      me.inputFramerateTag.val( me.framerate );
+      me.setUp_TickRendering(me.stageObj, me.framerate);
+    });
+
+    $( '#btnFramerateDown' ).click( function() 
+    {
+      me.framerate -= 5;
+      if ( me.framerate < 1 ) me.framerate = 1;
+
+      me.inputFramerateTag.val( me.framerate );
+      me.setUp_TickRendering(me.stageObj, me.framerate);
+    });
+
   };
 
   // ---------------------------------------------------
@@ -42,12 +75,19 @@ function CanvasStage()
     return new createjs.Stage('demoCanvas');
   };
 
-  me.setUp_TickRendering = function (stageObj) {
-    createjs.Ticker.framerate = me.framerate;
-    createjs.Ticker.addEventListener('tick', function (event) {
-      me.tickRender(stageObj);
-    });
+  me.setUp_TickRendering = function (stageObj, framerate) 
+  {
+    createjs.Ticker.framerate = framerate;
+
+    createjs.Ticker.removeEventListener('tick', me.eventListener_TickRender );
+
+    createjs.Ticker.addEventListener('tick', me.eventListener_TickRender );
   };
+
+  me.eventListener_TickRender = function()
+  {
+    me.tickRender( me.stageObj );
+  }
 
   me.setUp_KeyDown_BtnClicks = function (stageObj) {
     // key down handle
