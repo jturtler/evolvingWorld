@@ -32,7 +32,16 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
     me.proxyLinesDraw(objInProxyList, me.proxyLines, me.stageObj);
     // https://7thzero.com/blog/how-draw-line-using-createjs-easeljs
 
-    me.kidsTouchNotify( objInProxyList );
+    // Interests Build up
+    me.kidsReact_InProxy( objInProxyList );
+    //me.kidsTouchNotify( objInProxyList );
+
+
+    // Decide on Action - from Interests
+    kids.forEach((kid) => 
+    {
+      //kid.decideInterest();
+    });
 
   };
 
@@ -159,6 +168,58 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
     });
   };
 
+  // -------------------------------
+
+  me.kidsReact_InProxy = function( objInProxyList )
+  {
+    Object.keys(objInProxyList).forEach((key) => 
+    {
+      var proxyData = objInProxyList[key];
+
+      if (proxyData && proxyData.obj1 && proxyData.obj2) 
+      {
+        var obj1 = proxyData.obj1;
+        var obj2 = proxyData.obj2;
+        
+        obj1.addInterest( obj2, proxyData.distance );
+        obj2.addInterest( obj1, proxyData.distance );
+
+        /*
+        if ( proxyData.distance <= ( obj1.size + obj2.size ) )
+        {
+          me.kidsInteract( obj1, obj2 );
+        }
+        else 
+        {
+          // If in proxy, but not in touch, either go on it's way, run away, or go closer..
+
+          // if same color, go closer...
+
+          // if diff color, but size is bigger, go closer.  size is smaller, run away.. (go on it's way..) 
+
+          // But only take one interest at a time...  Out of all interest combined..
+
+          obj1.addInterest( obj2 );
+          obj2.addInterest( obj1 );
+
+          // the interest could change for each tick, which decides the movement..
+
+        }
+        */
+
+
+      }
+    });
+
+    // We need to notify that the interest should be decided?  On here?
+
+
+  };
+
+
+
+  // -------------------------------
+
   me.kidsTouchNotify = function( objInProxyList )
   {
     Object.keys(objInProxyList).forEach((key) => 
@@ -205,14 +266,14 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
       kid2.size = kid2.size - 2;
       kid1.size++;      
 
-      console.log( 'kid1 size win' );
+      //console.log( 'kid1 size win' );
     } 
     else if ( kid1.size < kid2.size )
     {
       kid1.size = kid1.size - 2;
       kid2.size++;      
 
-      console.log( 'kid2 size win' );
+      //console.log( 'kid2 size win' );
     }   
 
   };  

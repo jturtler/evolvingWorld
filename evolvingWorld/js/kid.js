@@ -30,6 +30,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.modeInteract = false;
 
+  me.interestList = [];
+
   // ----------------------------
 
   me.tickCount = 0;
@@ -129,6 +131,49 @@ function Kid(stage, name, attribute, locationX, locationY) {
     // clear wallTouches after each perform
     me.wallTouches = [];
   };
+
+  // -------------------------------------------
+       
+  me.addInterest = function( otherObj, distance )
+  {
+    me.interestList.push( { 'otherObj': otherObj, 'distance': distance } );
+  };
+
+
+  me.decideInterest = function()
+  {
+    me.interestList.forEach( interest => {
+
+      
+    });
+  }
+
+  /*
+  if ( proxyData.distance <= ( obj1.size + obj2.size ) )
+  {
+    me.kidsInteract( obj1, obj2 );
+  }
+  else 
+  {
+    // If in proxy, but not in touch, either go on it's way, run away, or go closer..
+
+    // if same color, go closer...
+
+    // if diff color, but size is bigger, go closer.  size is smaller, run away.. (go on it's way..) 
+
+    // But only take one interest at a time...  Out of all interest combined..
+
+    obj1.addInterest( obj2 );
+    obj2.addInterest( obj1 );
+
+    // the interest could change for each tick, which decides the movement..
+
+  }
+  */
+
+
+
+
 
   // ------------  Flash Action Related ---------
 
