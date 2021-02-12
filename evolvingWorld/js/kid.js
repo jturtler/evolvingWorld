@@ -32,6 +32,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.interestList = [];
 
+  me.finalInterest;
+
   // ----------------------------
 
   me.tickCount = 0;
@@ -142,10 +144,25 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.decideInterest = function()
   {
-    me.interestList.forEach( interest => {
+    // Interest Priority: 'fear' > 'hunger' > 'procreate' > 'wonder'
+    //
+    //    'fear' condition: 
+    //          - diff color, larger than me --> run away from enemy
+    //    'hunger' condition:
+    //          - health level down..  food/other smaller obj near by  --> Go toward to it..  (if health level reach 0, really slow moving?  hibernation?)
+    //    'procreate' condition:
+    //          - same color, on procreate turned on --> go toward to it
+    //    'wonder' condition:
+    //          - 
 
+    me.interestList.forEach( interest => {
       
     });
+
+
+    //me.finalInterest = {};
+
+    // This 'finalIntest' will impect how 'performNext' will be done..  move in some other way..
   }
 
   /*
