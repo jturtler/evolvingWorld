@@ -32,7 +32,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.interestList = [];
 
-  me.finalInterest;
+  me.currentInterest;
 
   // ----------------------------
 
@@ -100,9 +100,15 @@ function Kid(stage, name, attribute, locationX, locationY) {
   // -----------------------------------
   // --- Actions
 
-  me.performNext = function () {
-    // 1st, make the directional location one movement
-    me.moveNext(me.wallTouches, me.modeInteract );
+  me.performNext = function () 
+  {
+    // 1nd. Based on Interest, perform absorbing?
+    // me.Interest_Absorb( me.currInterest );
+
+
+    // 2st, make the directional location one movement - based on wall touch, interest..
+    // Move Next, Change Direction, etc..
+    me.moveNext( me.wallTouches, me.modeInteract, me.currInterest );
 
     // --------------
 
@@ -112,7 +118,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.changeByAge(newAge);  // Not too good...  Changes age & size..
 
     // Direction
-    me.setDirectionChange_InFrequency( me.tickCount, me.directionChange_Rate, me.directionChange_DegreeLimit );
+    //me.setDirectionChange_InFrequency( me.tickCount, me.directionChange_Rate, me.directionChange_DegreeLimit );
 
     // -----------------------
 
@@ -130,15 +136,17 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.displayFlash(me.flashAction);
     }
 
-    // clear wallTouches after each perform
+
+    // Clear wallTouches after each perform
     me.wallTouches = [];
+    me.interestList = [];
   };
 
   // -------------------------------------------
        
-  me.addInterest = function( otherObj, distance )
+  me.addInterest = function( targetObj, distance )
   {
-    me.interestList.push( { 'otherObj': otherObj, 'distance': distance } );
+    me.interestList.push( { 'targetObj': targetObj, 'distance': distance } );
   };
 
 
@@ -149,20 +157,71 @@ function Kid(stage, name, attribute, locationX, locationY) {
     //    'fear' condition: 
     //          - diff color, larger than me --> run away from enemy
     //    'hunger' condition:
-    //          - health level down..  food/other smaller obj near by  --> Go toward to it..  (if health level reach 0, really slow moving?  hibernation?)
+    //          - energy level down..  food/other smaller obj near by  --> Go toward to it..  (if health level reach 0, really slow moving?  hibernation?)
     //    'procreate' condition:
     //          - same color, on procreate turned on --> go toward to it
     //    'wonder' condition:
     //          - 
 
+    // reset the interest..
+    me.currInterest = undefined;
+
+
     me.interestList.forEach( interest => {
       
+      var targetObj = interest.targetObj;
+
+      // fear case..
+      if ( targetObj.color !== me.color && targetObj.size > me.size )
+      {
+        if ( !me.checkCurrInterestType( me.currentInterest, [ 'fear' ] ) )
+        {
+          me.currentInterest = Util.cloneJson( interest );
+          me.currentInterest.type = 'fear';
+        }
+      }
+      //else if ( me.energy < me.energyHungerLvl )
+      else if ( targetObj.color !== me.color && targetObj.size < me.size 
+        && interest.distance <= ( me.size + targetObj.size )  // create method for this..
+        )
+      {
+        // Absorb the other one..  
+        // NOTE: this only allows one ABSORB at a time!!!  Maybe it should do multiple absorb later?
+        if ( !me.checkCurrInterestType( me.currentInterest, [ 'fear', 'hunger' ] ) )
+        {
+          me.currentInterest = Util.cloneJson( interest );
+          me.currentInterest.type = 'hunger';
+        }
+      }
+
     });
 
+    // This 'finalIntest/currentInterest' will impect how 'performNext' will be done..  move in some other way..
+  };
 
-    //me.finalInterest = {};
 
-    // This 'finalIntest' will impect how 'performNext' will be done..  move in some other way..
+  me.absorbTarget = function( targetObj )
+  {
+    // TODO: Absorbed energy goes to energy refurnish..
+    // Rest goes to increase size?
+
+    targetObj.size = targetObj.size - 2;
+    me.size++;      
+  }; 
+
+
+  me.checkCurrInterestType = function( currInterest, checkTypeArr )
+  {
+    reutrn ( currInterest && checkTypeArr.indexOf( currInterest.type ) >= 0 );
+  };
+
+
+  me.Interest_Absorb = function( currInterest )
+  {
+    if ( currInterest && currInterest.type === 'hunger' )
+    {
+      me.absorbTarget( currInterest.targetObj )
+    }
   }
 
   /*
@@ -366,15 +425,22 @@ function Kid(stage, name, attribute, locationX, locationY) {
   };
 
 
-  me.moveNext = function( wallTouches, modeInteract ) 
+  me.moveNext = function( wallTouches, modeInteract, currInterest ) 
   {
-    if ( modeInteract ) {}
-    else
+    if ( wallTouches )
     {
       // sets me.movementX, me.movementY
       me.setDirection_Bounce(wallTouches);
 
       me.setLocation(me.x + me.movementX, me.y + me.movementY);
+    }
+    else if ( currInterest )
+    {
+      if ( currInterest && currInterest.type === 'fear' )
+      {
+        // Need to move away from it..  But can not turn right away..  Need to turn gradually..
+
+      }
     }
   };
 

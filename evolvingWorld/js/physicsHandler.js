@@ -36,11 +36,10 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
     me.kidsReact_InProxy( objInProxyList );
     //me.kidsTouchNotify( objInProxyList );
 
-
     // Decide on Action - from Interests
-    kids.forEach((kid) => 
+    kids.forEach( kid => 
     {
-      //kid.decideInterest();
+      kid.decideInterest();
     });
 
   };
@@ -172,6 +171,8 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
 
   me.kidsReact_InProxy = function( objInProxyList )
   {
+    // 'interestList' in each object will be reset after each move?
+
     Object.keys(objInProxyList).forEach((key) => 
     {
       var proxyData = objInProxyList[key];

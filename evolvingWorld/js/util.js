@@ -57,3 +57,30 @@ Util.getFromList = function( list, propertyName, value )
 
 	return item;
 };
+
+
+
+// ----------------------------------
+// JSON Deep Copy Related
+
+// Handles both object and array
+Util.cloneJson = function( jsonObj )
+{
+	var newJsonObj;
+
+	if ( jsonObj )
+	{
+		try
+		{
+			newJsonObj = JSON.parse( JSON.stringify( jsonObj ) );
+		}
+		catch( errMsg ) {
+			console.log( 'ERROR in Util.cloneJson, errMsg: ' + errMsg );
+		}
+	} 
+
+	return newJsonObj;
+};
+
+// JSON Deep Copy Related
+// ----------------------------------
