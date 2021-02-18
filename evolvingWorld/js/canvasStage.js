@@ -105,16 +105,26 @@ function CanvasStage()
 
   // -------------------------------------------------------
 
-  me.tickRender = function (stageObj) {
-    if (!me._bStop) {
-      // NOTE: Put this in 'PhysicsHandler'?
-      me.kids.forEach((kid, i, list) => {
-        kid.performNext();
-        if (kid.died) list.splice(i, 1);
-      });
+  me.tickRender = function (stageObj) 
+  {
+    if ( !me._bStop ) 
+    {
+      // Reset/Clear things
+      GraphicsService.clearLines( stageObj );
 
+      // Perform Physics 1st?  Or kids act 1st?
       me.physicsHandler.performPhysics(me.kids);
 
+
+      // NOTE: Put this in 'PhysicsHandler'?
+      me.kids.forEach((kid, i, list) => 
+      {
+        kid.performNext();
+
+        // Remove kids if died..
+        if ( kid.died ) list.splice(i, 1);
+      });
+     
       stageObj.update();
     }
   };

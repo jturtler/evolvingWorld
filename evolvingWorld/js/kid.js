@@ -44,6 +44,10 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.middleAge = 10;
   me.sizeIncreaseRate = 2;
 
+  me.sizeMax = 60;
+  me.power = 0;
+
+
   me.directionChange_Rate = 20;    // NEW
   me.directionChange_DegreeLimit = 45;    // NEW // +/- 30 degree
 
@@ -104,8 +108,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
   {
     
     if ( me.currentInterest ) {
-      console.log( "me.performNext - currentInterest: " );
-      console.log( me.currentInterest );
+      //console.log( "me.performNext - currentInterest: " );
+      //console.log( me.currentInterest );
     }
 
 
@@ -201,9 +205,10 @@ function Kid(stage, name, attribute, locationX, locationY) {
     });
 
     // This 'finalIntest/currentInterest' will impect how 'performNext' will be done..  move in some other way..
-    if ( me.currentInterest ) {
-      console.log( "me.currentInterest: " );
-      console.log( me.currentInterest );
+    if ( me.currentInterest ) 
+    {
+      // Draw line for hunger following to target..
+      if ( me.currentInterest.type === 'hunger' ) GraphicsService.addLineDraw( me.stage, me, me.currentInterest.targetObj, Constants.COLOR_HUNGERLINE );
     }
   };
 
@@ -229,7 +234,13 @@ function Kid(stage, name, attribute, locationX, locationY) {
     // TODO: Absorbed energy goes to energy refurnish..
     // Rest goes to increase size?
     targetObj.size = targetObj.size - 2;
-    me.size++;      
+
+    if ( me.size < me.sizeMax ) me.size++;      
+    else 
+    {
+      me.power++;
+      me.setLabelChange( 'P' + me.power );
+    }
   }; 
 
 
@@ -237,29 +248,6 @@ function Kid(stage, name, attribute, locationX, locationY) {
   {
     return ( distance <= ( me.size + target.size ) );
   };
-
-  /*
-  if ( proxyData.distance <= ( obj1.size + obj2.size ) )
-  {
-    me.kidsInteract( obj1, obj2 );
-  }
-  else 
-  {
-    // If in proxy, but not in touch, either go on it's way, run away, or go closer..
-
-    // if same color, go closer...
-
-    // if diff color, but size is bigger, go closer.  size is smaller, run away.. (go on it's way..) 
-
-    // But only take one interest at a time...  Out of all interest combined..
-
-    obj1.addInterest( obj2 );
-    obj2.addInterest( obj1 );
-
-    // the interest could change for each tick, which decides the movement..
-
-  }
-  */
 
 
   // ------------  Flash Action Related ---------
@@ -325,7 +313,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
       me.age = newAge;
 
       // Add short term flash when age is changed.
-      me.addFlashAction(2, 'outerCircle', Constants.AGING_COLOR, 2);
+      me.addFlashAction(2, 'outerCircle', Constants.COLOR_AGING, 2);
 
       me.size = me.setSizeByAgeChange(me.size, ageDiff, newAge, me.middleAge);
 
@@ -387,8 +375,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
     }
   };
 
-  me.setLabelChange = function (age) {
-    me.label.text = me.name; // + "\n" + age;
+  me.setLabelChange = function ( moreStr ) {
+    me.label.text = me.name + '[' + moreStr + ']'; // + "\n" + age;
   };
 
   // ----------------------------------
@@ -512,16 +500,23 @@ function Kid(stage, name, attribute, locationX, locationY) {
   {
     var bBounce = false;
   
-    if (wallTouches.indexOf('reachedWall_Left') >= 0) {
+    if ( wallTouches.indexOf('reachedWall_Left') >= 0 ) 
+    {
       me.movementX = -me.movementX;
       bBounce = true;
-    } else if (wallTouches.indexOf('reachedWall_Right') >= 0) {
+    } 
+    else if ( wallTouches.indexOf('reachedWall_Right') >= 0 ) 
+    {
       me.movementX = -me.movementX;
       bBounce = true;
-    } else if (wallTouches.indexOf('reachedWall_Top') >= 0) {
+    } 
+    else if ( wallTouches.indexOf('reachedWall_Top') >= 0 ) 
+    {
       me.movementY = -me.movementY;
       bBounce = true;
-    } else if (wallTouches.indexOf('reachedWall_Bottom') >= 0) {
+    } 
+    else if ( wallTouches.indexOf('reachedWall_Bottom') >= 0 ) 
+    {
       me.movementY = -me.movementY;
       bBounce = true;
     }
@@ -529,8 +524,6 @@ function Kid(stage, name, attribute, locationX, locationY) {
     if ( bBounce )
     { 
       me.directionAngle = me.getAngleFromDirectionXY( me.movementX, me.movementY );
-
-      me.addFlashAction(3, 'innerCircle', Constants.WALL_CONTACT_COLOR, 70);
     }
   };
 
@@ -549,12 +542,16 @@ function Kid(stage, name, attribute, locationX, locationY) {
         // Need to move away from it..  But can not turn right away..  Need to turn gradually..
         //currentInterest.targetObj
         me.setDirection_moveAwayTarget( currentInterest.targetObj, speed );
+
+        me.addFlashAction( 1, 'innerCircle', Constants.COLOR_FEAR, Constants.FILL_PERCENT_FEAR );
       }
       else if ( currentInterest.type === 'hunger' )
       {
         // Move toward to it.
         //currentInterest.targetObj
         me.setDirection_moveTowardTarget( currentInterest.targetObj, speed );
+
+        me.addFlashAction( 1, 'innerCircle', Constants.COLOR_CHASE, Constants.FILL_PERCENT_CHASE );        
       }
     }
     
@@ -594,12 +591,18 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.wallTouches.push( notice );
   };
 
-  me.getObjQuickInfo = function () {
+  me.getObjQuickInfo = function () 
+  {
+
+    var interestType = ( me.currentInterest ) ? me.currentInterest.type: '';
+
     return {
       name: me.name,
       age: me.age,
       size: me.size,
+      power: me.power,      
       speed: me.speed,
+      interest: interestType,
       angle: me.directionAngle.toFixed(0),
       changeAngle: me.changeAngle,
       attr: me.attribute,

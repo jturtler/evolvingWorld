@@ -8,17 +8,13 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
   me.stageObj = stageObj;
   me.canvas_width = canvas_width;
   me.canvas_height = canvas_height;
-  me.proxyDistance = 100;
-  me.proxyLines = [];
+  //me.proxyDistance = 100;
   //me.runOnce = true;
 
   me.performPhysics = function (kids) 
   {
     // reset
     var objInProxyList = {};
-
-    // clear proxy lines
-    me.clearProxyLines(me.proxyLines, me.stageObj);
 
     // go through each kids and perform physics related tasks..
     kids.forEach((kid) => 
@@ -29,12 +25,11 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
     });
 
     // Draw line btween
-    me.proxyLinesDraw(objInProxyList, me.proxyLines, me.stageObj);
+    me.proxyLinesDraw(objInProxyList, me.stageObj);
     // https://7thzero.com/blog/how-draw-line-using-createjs-easeljs
 
     // Interests Build up
     me.kidsReact_InProxy( objInProxyList );
-    //me.kidsTouchNotify( objInProxyList );
 
     // Decide on Action - from Interests
     kids.forEach( kid => 
@@ -133,15 +128,8 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
     return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
   };
 
-  me.clearProxyLines = function( proxyLines, stageObj ) 
-  {
-    proxyLines.forEach((line, i, list) => {
-      stageObj.removeChild(line);
-      list.splice(i, 1);
-    });
-  };
 
-  me.proxyLinesDraw = function( objInProxyList, proxyLines, stageObj) 
+  me.proxyLinesDraw = function( objInProxyList, stageObj) 
   {
     Object.keys(objInProxyList).forEach((key) => 
     {
@@ -152,17 +140,7 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
         var obj1 = proxyData.obj1;
         var obj2 = proxyData.obj2;
 
-        var line = new createjs.Shape();
-
-        line.graphics
-          .setStrokeStyle(1)
-          .beginStroke('green')
-          .moveTo(obj1.x, obj1.y)
-          .lineTo(obj2.x, obj2.y)
-          .endStroke();
-
-        stageObj.addChild(line);
-        proxyLines.push(line);
+        GraphicsService.addLineDraw( stageObj, obj1, obj2, Constants.COLOR_PROXYLINE );
       }
     });
   };
@@ -184,99 +162,9 @@ function PhysicsHandler(stageObj, canvas_width, canvas_height)
         
         obj1.addInterest( obj2, proxyData.distance );
         obj2.addInterest( obj1, proxyData.distance );
-
-        /*
-        if ( proxyData.distance <= ( obj1.size + obj2.size ) )
-        {
-          me.kidsInteract( obj1, obj2 );
-        }
-        else 
-        {
-          // If in proxy, but not in touch, either go on it's way, run away, or go closer..
-
-          // if same color, go closer...
-
-          // if diff color, but size is bigger, go closer.  size is smaller, run away.. (go on it's way..) 
-
-          // But only take one interest at a time...  Out of all interest combined..
-
-          obj1.addInterest( obj2 );
-          obj2.addInterest( obj1 );
-
-          // the interest could change for each tick, which decides the movement..
-
-        }
-        */
-
-
       }
     });
 
-    // We need to notify that the interest should be decided?  On here?
-
-
   };
-
-
-
-  // -------------------------------
-
-  me.kidsTouchNotify = function( objInProxyList )
-  {
-    Object.keys(objInProxyList).forEach((key) => 
-    {
-      var proxyData = objInProxyList[key];
-
-      if (proxyData && proxyData.obj1 && proxyData.obj2) 
-      {
-        var obj1 = proxyData.obj1;
-        var obj2 = proxyData.obj2;
-
-        if ( proxyData.distance <= ( obj1.size + obj2.size ) )
-        {
-          me.kidsInteract( obj1, obj2 );
-        }
-      }
-    });
-  };
-
-
-  // ----------------------------------
-  // ---- Kids Interaction Related -----
-  //    Should have it's own class?
-
-  me.kidsInteract = function( kid1, kid2 )
-  {
-    // By each other's compatibility, either absorb/fight, grow friendship/procreate
-    me.kidsAbsorb( kid1, kid2 );
-    // Or me.kidsStayTogether();
-    // Or me.kidsHaveRelationship();
-    // Or me.kidsCreateOffspring();
-  };
-
-  me.kidsAbsorb = function( kid1, kid2 )
-  {
-    // Both kids stop moving..
-    // kid1.moveCloser( kids2 );  kid2.stay();
-
-    // kids.setModeInteract( true );
-
-    // 'size' bigger one takes size 2 from smaller one, but bigger one only takes 50%, size 1.
-    if ( kid1.size > kid2.size )
-    {
-      kid2.size = kid2.size - 2;
-      kid1.size++;      
-
-      //console.log( 'kid1 size win' );
-    } 
-    else if ( kid1.size < kid2.size )
-    {
-      kid1.size = kid1.size - 2;
-      kid2.size++;      
-
-      //console.log( 'kid2 size win' );
-    }   
-
-  };  
 
 }
