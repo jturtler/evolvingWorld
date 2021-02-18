@@ -28,11 +28,11 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.directionAngle;  // NEW
   me.changeAngle = 0;  // OBSOLETE
 
-  me.modeInteract = false;
-
   me.interestList = [];
 
   me.currentInterest;
+
+  me.maxTickAngleChange = 5;  // max angle change per tick is 5 degree.  If frameRate is 10, we have 10 tick per sec.  thus, 50 degree per sec max changing angle.
 
   // ----------------------------
 
@@ -75,7 +75,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
     me.addChild(me.shape, me.label);
 
-    me.setLocation(me.x, me.y);
+    //me.setLocation(me.x, me.y);
 
     me.directionAngle = Math.random() * 360;
     me.setDirectionXY_ByAngle( me.directionAngle, me.speed );
@@ -103,12 +103,12 @@ function Kid(stage, name, attribute, locationX, locationY) {
   me.performNext = function () 
   {
     // 1nd. Based on Interest, perform absorbing?
-    // me.Interest_Absorb( me.currInterest );
+    me.Interest_Absorb( me.currInterest );
 
 
     // 2st, make the directional location one movement - based on wall touch, interest..
     // Move Next, Change Direction, etc..
-    me.moveNext( me.wallTouches, me.modeInteract, me.currInterest );
+    me.moveNext( me.wallTouches, me.currInterest, me.speed );
 
     // --------------
 
@@ -176,20 +176,18 @@ function Kid(stage, name, attribute, locationX, locationY) {
       {
         if ( !me.checkCurrInterestType( me.currentInterest, [ 'fear' ] ) )
         {
-          me.currentInterest = Util.cloneJson( interest );
+          me.currentInterest = interest;
           me.currentInterest.type = 'fear';
         }
       }
       //else if ( me.energy < me.energyHungerLvl )
-      else if ( targetObj.color !== me.color && targetObj.size < me.size 
-        && interest.distance <= ( me.size + targetObj.size )  // create method for this..
-        )
+      else if ( targetObj.color !== me.color && targetObj.size < me.size ) // && me.targetInTouch( interest.distance, targetObj )
       {
         // Absorb the other one..  
         // NOTE: this only allows one ABSORB at a time!!!  Maybe it should do multiple absorb later?
         if ( !me.checkCurrInterestType( me.currentInterest, [ 'fear', 'hunger' ] ) )
         {
-          me.currentInterest = Util.cloneJson( interest );
+          me.currentInterest = interest;
           me.currentInterest.type = 'hunger';
         }
       }
@@ -200,29 +198,35 @@ function Kid(stage, name, attribute, locationX, locationY) {
   };
 
 
-  me.absorbTarget = function( targetObj )
-  {
-    // TODO: Absorbed energy goes to energy refurnish..
-    // Rest goes to increase size?
-
-    targetObj.size = targetObj.size - 2;
-    me.size++;      
-  }; 
-
-
   me.checkCurrInterestType = function( currInterest, checkTypeArr )
   {
-    reutrn ( currInterest && checkTypeArr.indexOf( currInterest.type ) >= 0 );
+    return ( currInterest && checkTypeArr.indexOf( currInterest.type ) >= 0 );
   };
 
 
   me.Interest_Absorb = function( currInterest )
   {
-    if ( currInterest && currInterest.type === 'hunger' )
+    if ( currInterest && currInterest.type === 'hunger' 
+      && me.targetInTouch( currInterest.distance, currInterest.targetObj ) )
     {
-      me.absorbTarget( currInterest.targetObj )
+      me.absorbTarget( currInterest.targetObj );
     }
-  }
+  };
+
+
+  me.absorbTarget = function( targetObj )
+  {
+    // TODO: Absorbed energy goes to energy refurnish..
+    // Rest goes to increase size?
+    targetObj.size = targetObj.size - 2;
+    me.size++;      
+  }; 
+
+
+  me.targetInTouch = function( distance, target )
+  {
+    return ( distance <= ( me.size + target.size ) );
+  };
 
   /*
   if ( proxyData.distance <= ( obj1.size + obj2.size ) )
@@ -246,9 +250,6 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   }
   */
-
-
-
 
 
   // ------------  Flash Action Related ---------
@@ -382,6 +383,110 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.movementY = Math.sin(anglePi) * speed;
   };
 
+  
+  me.getAngleFromDirectionXY = function( movementX, movementY )
+  {
+    var angle = ( Math.atan2( movementY, movementX ) / Math.PI ) * 180;
+
+    // QUESTION: Why I have to do this? 0 - 270.. somehow, 280 => -10..  () -0 ~ -90
+    if ( angle < 0 )
+    {
+      angle = angle + 360;
+    }
+
+    return angle;
+  };
+
+  
+  me.getAngleToTarget = function( targetObj )
+  {
+    var movementX = targetObj.x - me.x;
+    var movementY = targetObj.y - me.y;
+    
+    var angle = ( Math.atan2( movementY, movementX ) / Math.PI ) * 180;
+
+    // QUESTION: Why I have to do this? 0 - 270.. somehow, 280 => -10..  () -0 ~ -90
+    if ( angle < 0 )
+    {
+      angle = angle + 360;
+    }
+
+    return angle;
+  };
+
+
+  me.getAngleCurr = function()
+  {
+    return me.getAngleFromDirectionXY( me.movementX, me.movementY );
+  };
+
+  me.getAngleTowardTarget = function( targetAngle, currAngle, maxAngle )
+  {
+    // paramInputs: 45, 130, 5
+    // targetAngle = 45, currentAngle = 130, maxAngle = 5
+    // we want to change to 45 evantually..
+
+    // 45 - 130 = -85, but with max 5 at a time, the new angle is 130 - 5
+
+    // 1st is target, 2nd is currAngle..
+    // 100 - 30 = 70, but should limit to 5 degree each tick, thus, angle 5, thus, 30 + 5
+
+    // 340 - 10 = 330  <-- but over 180, thus need to go the other way.. (angle direction)  
+    //    330 - 360 = -30..  --> -5(max), 10 - 5..   
+
+    // 10 - 350 = -340.  Because less than -180, switch.  -340 + 360 = 20..  
+
+
+    // 1. Get simple angle diff number;
+    var angleDiff = targetAngle - currAngle;
+
+    // 2. Switch angle diff direction (if large) to smaller angle diff direction.
+    if ( angleDiff > 180 ) angleDiff = angleDiff - 360;
+    else if ( angleDiff < -180 ) angleDiff = angleDiff + 360;
+
+    // 3. Limit the angle diff to max angle.
+    if ( angleDiff > 0 && angleDiff > maxAngle ) angleDiff = maxAngle;
+    if ( angleDiff < 0 && angleDiff > (-maxAngle) ) angleDiff = (-maxAngle);
+
+    return angleDiff;
+  };
+
+
+  me.getAngleAwayTarget = function( targetAngle, currAngle, maxAngle )
+  {
+    // 45, 130, 5
+    // want to go to 45 + 180 = 225 % 360 = 225 <-- new targetAngle..
+    var newTargetAngle = ( targetAngle + 180 ) % 360;
+    
+    return me.getAngleToward( newTargetAngle, currAngle, maxAngle );
+  };
+
+
+  me.setDirection_moveAwayTarget = function( targetObj, speed )
+  {
+    var angleToTarget = me.getAngleToTarget( targetObj );
+    var currAngle = me.getAngleCurr();
+
+    var angleChange = me.getAngleAwayTarget( angleToTarget, currAngle, me.maxTickAngleChange );
+
+    var newAngle = ( currAngle + angleChange + 360 ) % 360;
+            
+    me.setDirectionXY_ByAngle( newAngle, speed );
+  };
+
+
+  me.setDirection_moveTowardTarget = function( targetObj, speed )
+  {
+ 			var angleToTarget = me.getAngleToTarget( targetObj );
+			var currAngle = me.getAngleCurr();
+
+			var angleChange = me.getAngleTowardTarget( angleToTarget, currAngle, me.maxTickAngleChange );
+
+			var newAngle = ( currAngle + angleChange + 360 ) % 360;
+              
+      me.setDirectionXY_ByAngle( newAngle, speed );
+  };
+
   // ------------------------------------
 
   me.setDirection_Bounce = function (wallTouches) 
@@ -411,43 +516,37 @@ function Kid(stage, name, attribute, locationX, locationY) {
   };
 
 
-  me.getAngleFromDirectionXY = function( movementX, movementY )
-  {
-    var angle = ( Math.atan2( movementY, movementX ) / Math.PI ) * 180;
-
-    // QUESTION: Why I have to do this? 0 - 270.. somehow, 280 => -10..  () -0 ~ -90
-    if ( angle < 0 )
-    {
-      angle = angle + 360;
-    }
-
-    return angle;
-  };
-
-
-  me.moveNext = function( wallTouches, modeInteract, currInterest ) 
+  me.moveNext = function( wallTouches, currInterest, speed ) 
   {
     if ( wallTouches )
     {
       // sets me.movementX, me.movementY
-      me.setDirection_Bounce(wallTouches);
-
-      me.setLocation(me.x + me.movementX, me.y + me.movementY);
+      me.setDirection_Bounce( wallTouches );
     }
     else if ( currInterest )
     {
-      if ( currInterest && currInterest.type === 'fear' )
+      if ( currInterest.type === 'fear' )
       {
         // Need to move away from it..  But can not turn right away..  Need to turn gradually..
-
+        //currInterest.targetObj
+        me.setDirection_moveAwayTarget( currInterest.targetObj, speed );
+      }
+      else if ( currInterest.type === 'hunger' )
+      {
+        // Move toward to it.
+        //currInterest.targetObj
+        me.setDirection_moveTowardTarget( currInterest.targetObj, speed );
       }
     }
+    
+    me.setLocation( me.x + me.movementX, me.y + me.movementY );
   };
 
-  me.setLocation = function (locX, locY) 
+
+  me.setLocation = function( locX, locY ) 
   {
-    if (locX) me.x = locX;
-    if (locY) me.y = locY;
+    if ( locX ) me.x = locX;
+    if ( locY ) me.y = locY;
   };
 
   // -----------------------------------------
