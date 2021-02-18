@@ -102,13 +102,19 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.performNext = function () 
   {
-    // 1nd. Based on Interest, perform absorbing?
-    me.Interest_Absorb( me.currInterest );
+    
+    if ( me.currentInterest ) {
+      console.log( "me.performNext - currentInterest: " );
+      console.log( me.currentInterest );
+    }
 
+
+    // 1nd. Based on Interest, perform absorbing?
+    me.Interest_Absorb( me.currentInterest );
 
     // 2st, make the directional location one movement - based on wall touch, interest..
     // Move Next, Change Direction, etc..
-    me.moveNext( me.wallTouches, me.currInterest, me.speed );
+    me.moveNext( me.wallTouches, me.currentInterest, me.speed );
 
     // --------------
 
@@ -164,7 +170,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
     //          - 
 
     // reset the interest..
-    me.currInterest = undefined;
+    me.currentInterest = undefined;
 
 
     me.interestList.forEach( interest => {
@@ -195,21 +201,25 @@ function Kid(stage, name, attribute, locationX, locationY) {
     });
 
     // This 'finalIntest/currentInterest' will impect how 'performNext' will be done..  move in some other way..
+    if ( me.currentInterest ) {
+      console.log( "me.currentInterest: " );
+      console.log( me.currentInterest );
+    }
   };
 
 
-  me.checkCurrInterestType = function( currInterest, checkTypeArr )
+  me.checkCurrInterestType = function( currentInterest, checkTypeArr )
   {
-    return ( currInterest && checkTypeArr.indexOf( currInterest.type ) >= 0 );
+    return ( currentInterest && checkTypeArr.indexOf( currentInterest.type ) >= 0 );
   };
 
 
-  me.Interest_Absorb = function( currInterest )
+  me.Interest_Absorb = function( currentInterest )
   {
-    if ( currInterest && currInterest.type === 'hunger' 
-      && me.targetInTouch( currInterest.distance, currInterest.targetObj ) )
+    if ( currentInterest && currentInterest.type === 'hunger' 
+      && me.targetInTouch( currentInterest.distance, currentInterest.targetObj ) )
     {
-      me.absorbTarget( currInterest.targetObj );
+      me.absorbTarget( currentInterest.targetObj );
     }
   };
 
@@ -254,7 +264,8 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   // ------------  Flash Action Related ---------
 
-  me.addFlashAction = function (count, action, color, sizePercentage) {
+  me.addFlashAction = function (count, action, color, sizePercentage) 
+  {
     me.flashAction[me.flashActionNextId] = {
       count: count,
       action: action,
@@ -265,31 +276,39 @@ function Kid(stage, name, attribute, locationX, locationY) {
     me.flashActionNextId++;
   };
 
-  me.removeFlashAction = function (id) {
+  me.removeFlashAction = function (id) 
+  {
     delete me.flashAction[id];
   };
 
-  me.displayFlash = function (flashAction) {
+  me.displayFlash = function (flashAction) 
+  {
     // For each flash action, paint them.
-    for (var propName in flashAction) {
+    for ( var propName in flashAction ) 
+    {
       var item_flash = flashAction[propName];
 
       // Take care of flash handling
-      if (item_flash.count > 0) {
+      if ( item_flash.count > 0 ) 
+      {
         item_flash.count--;
 
         // remove the
-        if (item_flash.action == 'innerCircle') {
+        if (item_flash.action == 'innerCircle') 
+        {
           var newSize = Math.floor(me.size / (100 / item_flash.sizePercentage));
           me.paintShape(item_flash.color, newSize, me.shape.graphics);
-        } else if (item_flash.action == 'outerCircle') {
+        } 
+        else if (item_flash.action == 'outerCircle') 
+        {
           // 'sizePercentage' should be changed to 'addedSize'
           var newSize = me.size + item_flash.sizePercentage;
           me.paintShape(item_flash.color, newSize, me.shape.graphics);
           me.paintShape(me.color, me.size, me.shape.graphics);
         }
 
-        if (item_flash.count <= 0) {
+        if (item_flash.count <= 0) 
+        {
           me.removeFlashAction(propName);
         }
       }
@@ -458,7 +477,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
     // want to go to 45 + 180 = 225 % 360 = 225 <-- new targetAngle..
     var newTargetAngle = ( targetAngle + 180 ) % 360;
     
-    return me.getAngleToward( newTargetAngle, currAngle, maxAngle );
+    return me.getAngleTowardTarget( newTargetAngle, currAngle, maxAngle );
   };
 
 
@@ -477,14 +496,14 @@ function Kid(stage, name, attribute, locationX, locationY) {
 
   me.setDirection_moveTowardTarget = function( targetObj, speed )
   {
- 			var angleToTarget = me.getAngleToTarget( targetObj );
-			var currAngle = me.getAngleCurr();
+    var angleToTarget = me.getAngleToTarget( targetObj );
+    var currAngle = me.getAngleCurr();
 
-			var angleChange = me.getAngleTowardTarget( angleToTarget, currAngle, me.maxTickAngleChange );
+    var angleChange = me.getAngleTowardTarget( angleToTarget, currAngle, me.maxTickAngleChange );
 
-			var newAngle = ( currAngle + angleChange + 360 ) % 360;
-              
-      me.setDirectionXY_ByAngle( newAngle, speed );
+    var newAngle = ( currAngle + angleChange + 360 ) % 360;
+            
+    me.setDirectionXY_ByAngle( newAngle, speed );
   };
 
   // ------------------------------------
@@ -516,26 +535,26 @@ function Kid(stage, name, attribute, locationX, locationY) {
   };
 
 
-  me.moveNext = function( wallTouches, currInterest, speed ) 
+  me.moveNext = function( wallTouches, currentInterest, speed ) 
   {
-    if ( wallTouches )
+    if ( wallTouches.length > 0 )
     {
       // sets me.movementX, me.movementY
       me.setDirection_Bounce( wallTouches );
     }
-    else if ( currInterest )
+    else if ( currentInterest )
     {
-      if ( currInterest.type === 'fear' )
+      if ( currentInterest.type === 'fear' )
       {
         // Need to move away from it..  But can not turn right away..  Need to turn gradually..
-        //currInterest.targetObj
-        me.setDirection_moveAwayTarget( currInterest.targetObj, speed );
+        //currentInterest.targetObj
+        me.setDirection_moveAwayTarget( currentInterest.targetObj, speed );
       }
-      else if ( currInterest.type === 'hunger' )
+      else if ( currentInterest.type === 'hunger' )
       {
         // Move toward to it.
-        //currInterest.targetObj
-        me.setDirection_moveTowardTarget( currInterest.targetObj, speed );
+        //currentInterest.targetObj
+        me.setDirection_moveTowardTarget( currentInterest.targetObj, speed );
       }
     }
     
