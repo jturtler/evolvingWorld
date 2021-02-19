@@ -182,7 +182,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
       var targetObj = interest.targetObj;
 
       // fear case..
-      if ( targetObj.color !== me.color && targetObj.size > me.size )
+      if ( targetObj.color !== me.color && targetObj.size > me.size )  // Consider power level as well?
       {
         if ( !me.checkCurrInterestType( me.currentInterest, [ 'fear' ] ) )
         {
@@ -191,7 +191,7 @@ function Kid(stage, name, attribute, locationX, locationY) {
         }
       }
       //else if ( me.energy < me.energyHungerLvl )
-      else if ( targetObj.color !== me.color && targetObj.size < me.size ) // && me.targetInTouch( interest.distance, targetObj )
+      else if ( targetObj.color !== me.color && targetObj.size < me.size ) // Consider power level as well?
       {
         // Absorb the other one..  
         // NOTE: this only allows one ABSORB at a time!!!  Maybe it should do multiple absorb later?
